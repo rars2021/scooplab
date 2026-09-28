@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScoopLab — Uchucchacua</title>
+<link rel="icon" href="scooplab.ico" sizes="any">
+<link rel="icon" href="scooplab.png" type="image/png">
+<link rel="stylesheet" href="rockwedge.css">
+</head>
+<body>
+
+<!-- fondo permanente: render 3D del equipo seleccionado -->
+<canvas id="escena"></canvas>
+<div id="escena-vacia" hidden>render 3D no disponible</div>
+
+<!-- ficha del equipo seleccionado -->
+<aside id="hud"></aside>
+
+<!-- selector de equipo -->
+<aside id="selector"></aside>
+
+<!-- modo de la escena 3D -->
+<div id="modos">
+  <span class="segmentado" id="segModo">
+    <button data-modo="ficha" class="sel" data-tip="Una unidad en la labor, con cotas">Ficha</button>
+    <button data-modo="ciclo" data-tip="Cargar, acarrear, descargar, retornar">Ciclo</button>
+    <button data-modo="equivalencia" data-tip="Cuantos equipos diesel igualan al electrico">Equivalencia</button>
+    <button data-modo="simulacion" data-tip="Operacion completa: frente, rampas y echadero">Simulacion</button>
+  </span>
+  <span class="segmentado" id="segMetaEq" hidden>
+    <button data-m="500">500</button><button data-m="750">750</button>
+    <button data-m="1000" class="sel">1000</button><button data-m="1500">1500</button>
+    <button data-m="2000">2000</button>
+  </span>
+  <div id="faseCiclo"></div>
+  <div id="reproductor" hidden>
+    <button class="rp" id="rpInicio" data-tip="Volver al inicio"></button>
+    <button class="rp" id="rpPlay" data-tip="Reproducir o pausar"></button>
+    <input type="range" id="rpBarra" min="0" max="1000" value="0" step="1"
+           data-tip="Arrastrar para adelantar o retroceder">
+    <div class="rp-lectura" id="rpLectura"></div>
+  </div>
+</div>
+
+<!-- ventanas flotantes -->
+<div id="ventanas"></div>
+
+<!-- barra de tareas -->
+<nav id="barra">
+  <button class="inicio" id="inicio" data-tip="Mostrar el render (minimiza todo)">
+    <span class="mk"></span><b>SCOOPLAB</b><span class="eng">v1.0</span>
+  </button>
+  <div class="sep"></div>
+  <div class="tareas" id="tareas"></div>
+  <div class="sep"></div>
+  <div class="bandeja">
+    <button class="tp" id="tpUnidad" data-tip="Alternar TCS / tonelada metrica">TCS</button>
+    <button class="tp" id="tpTema" data-tip="Alternar tema claro / oscuro">◐</button>
+    <div class="reloj" id="reloj"><b>--:--</b><span>--</span></div>
+  </div>
+</nav>
+
+<script src="iconos.js"></script>
+<script src="vendor/three.min.js"></script>
+<script src="render3d.js"></script>
+<script src="vistas.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

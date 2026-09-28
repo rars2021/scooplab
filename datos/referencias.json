@@ -1,0 +1,339 @@
+{
+  "origen": "Caso_Practico_Scoop_Uchucchacua v3.xlsx",
+  "n": 37,
+  "referencias": [
+    {
+      "concepto": "Capacidad efectiva cuchara",
+      "valor": "4.17 TCS",
+      "fuente": "TESIS BUENAVENTURA.pdf",
+      "tabla": "Tabla 21",
+      "pagina": "60",
+      "cita": "3.5 yd3 x 0.765 x 3.00 / 1.6362 x 0.85",
+      "verificar": "Formula fisica"
+    },
+    {
+      "concepto": "Ciclo scoop",
+      "valor": "3.0 min",
+      "fuente": "TESIS BUENAVENTURA.pdf",
+      "tabla": "Tabla 22",
+      "pagina": "61",
+      "cita": "Ciclo promedio por cuchara",
+      "verificar": "Medir en campo"
+    },
+    {
+      "concepto": "Disponibilidad / Utilizacion",
+      "valor": "80 % / 75 %",
+      "fuente": "TESIS BUENAVENTURA.pdf",
+      "tabla": "Tabla 22",
+      "pagina": "61",
+      "cita": "Indices de eficiencia",
+      "verificar": "Reporte de flota Buenaventura"
+    },
+    {
+      "concepto": "Densidad / esponjamiento / llenado",
+      "valor": "3.00 / 63.62 % / 85 %",
+      "fuente": "TESIS BUENAVENTURA.pdf",
+      "tabla": "Tabla 21",
+      "pagina": "60",
+      "cita": "",
+      "verificar": "Laboratorio / ensayo de campo"
+    },
+    {
+      "concepto": "Costo camion y transporte",
+      "valor": "50 US$/h; 1.39 US$/TCS",
+      "fuente": "TESIS BUENAVENTURA.pdf",
+      "tabla": "Tabla 23",
+      "pagina": "61",
+      "cita": "MT-2000, 18 TCS/viaje, 30 min, 1.5 km",
+      "verificar": "Ferreyros / Volvo Peru"
+    },
+    {
+      "concepto": "Potencia scoop tesis",
+      "valor": "182 HP",
+      "fuente": "TESIS BUENAVENTURA.pdf",
+      "tabla": "Tabla 24",
+      "pagina": "64",
+      "cita": "Tabla de requerimiento de aire",
+      "verificar": ""
+    },
+    {
+      "concepto": "Rampa Fernando",
+      "valor": "4.0 x 4.0 m",
+      "fuente": "TESIS BUENAVENTURA.pdf",
+      "tabla": "-",
+      "pagina": "90 (PDF)",
+      "cita": "Acceso principal, -13 %",
+      "verificar": ""
+    },
+    {
+      "concepto": "Rampas positivas",
+      "valor": "3.0 x 3.7 m",
+      "fuente": "TESIS BUENAVENTURA.pdf",
+      "tabla": "-",
+      "pagina": "90 (PDF)",
+      "cita": "Acceso a tajos, +15 %",
+      "verificar": ""
+    },
+    {
+      "concepto": "Labor de produccion y ventanas",
+      "valor": "3.0 x 3.0 m",
+      "fuente": "TESIS BUENAVENTURA.pdf",
+      "tabla": "-",
+      "pagina": "91-92 (PDF)",
+      "cita": "Corte y relleno mecanizado; ventanas al ore pass",
+      "verificar": ""
+    },
+    {
+      "concepto": "Flota de la unidad",
+      "valor": "2.2 / 3.5 / 4 yd3 diesel; 1.5 yd3 electrico",
+      "fuente": "TESIS BUENAVENTURA.pdf",
+      "tabla": "-",
+      "pagina": "91 (PDF)",
+      "cita": "Anexo metodos de explotacion",
+      "verificar": ""
+    },
+    {
+      "concepto": "Pedido Sandvik 2025",
+      "valor": "6 LH514, 6 LH307, 5 LH517i",
+      "fuente": "mining.sandvik / mineriaenlinea.com",
+      "tabla": "-",
+      "pagina": "14-mar-2025",
+      "cita": "Para El Brocal, Uchucchacua y Yumpag; no detalla por mina",
+      "verificar": "https://www.mining.sandvik/en/news-and-media/news-archive/2025/03/buenaventura-selects-sandvik-to-provide-36-unit-fleet-in-peru/"
+    },
+    {
+      "concepto": "Toro LH307",
+      "valor": "9300x2200x2300 mm, 7 t, 3.1-3.7 m3, 160 kW",
+      "fuente": "Sandvik ficha TS3-LH307-B-04B",
+      "tabla": "-",
+      "pagina": "2, 6, 7",
+      "cita": "'7 tonne loader developed specifically for narrow-vein underground mines'",
+      "verificar": "https://www.mining.sandvik/en/products/equipment/loaders/lh307-underground-lhd/"
+    },
+    {
+      "concepto": "Epiroc Scooptram ST7",
+      "valor": "Ancho 2309 mm, 6.8 t, 2.3-3.8 m3, 144 kW",
+      "fuente": "Epiroc ficha 9869 0107 01d",
+      "tabla": "-",
+      "pagina": "4-5",
+      "cita": "",
+      "verificar": "https://epiroc.scene7.com/is/content/epiroc/9869+0107+01d+Scooptram+ST7+technical+specification_digitalpdf"
+    },
+    {
+      "concepto": "Cat R1300G",
+      "valor": "Ancho c/cuchara 2155-2518, 6.8 t, 2.4-3.4 m3, 123 kW",
+      "fuente": "Caterpillar ficha R1300G",
+      "tabla": "-",
+      "pagina": "13-14",
+      "cita": "Recommended clearance 3000 x 2800 mm",
+      "verificar": "https://s7d2.scene7.com/is/content/Caterpillar/C681897"
+    },
+    {
+      "concepto": "Gama Toro (LH202..LH621i)",
+      "valor": "Dimensiones y capacidades",
+      "fuente": "mining.sandvik pagina de producto",
+      "tabla": "-",
+      "pagina": "-",
+      "cita": "Ver hoja Equipos",
+      "verificar": "https://www.mining.sandvik/en/products/equipment/loaders/lh307-underground-lhd/"
+    },
+    {
+      "concepto": "Orcopampa: scoops electricos y STB",
+      "valor": "12 scoops 2.2/1.5/1 yd3, cable 120 m; STB 30 kWh, US$ 60 mil, ahorro US$ 200 mil/año",
+      "fuente": "Revista ProActivo",
+      "tabla": "-",
+      "pagina": "2022",
+      "cita": "Buenaventura + BEV del Peru",
+      "verificar": "https://proactivo.com.pe/buenaventura-desarrolla-para-su-mina-orcopampa-novedoso-y-economico-equipo-de-carguio-a-bateria/"
+    },
+    {
+      "concepto": "Reduccion ventilacion con BEV",
+      "valor": "~40 %",
+      "fuente": "Sundqvist_2025_BEV_underground_mines.pdf",
+      "tabla": "Findings 4",
+      "pagina": "22",
+      "cita": "",
+      "verificar": "https://www.sciencedirect.com/science/article/pii/S1364032124007500"
+    },
+    {
+      "concepto": "Factor CO2 diesel",
+      "valor": "10.2 kg/gal",
+      "fuente": "EPA / IPCC",
+      "tabla": "-",
+      "pagina": "-",
+      "cita": "",
+      "verificar": "https://www.epa.gov/climateleadership/ghg-emission-factors-hub"
+    },
+    {
+      "concepto": "Vida util LHD 3-4 yd3",
+      "valor": "20 000 - 30 000 h",
+      "fuente": "CostMine handbook",
+      "tabla": "4.2",
+      "pagina": "78-82",
+      "cita": "",
+      "verificar": "costmine.com"
+    },
+    {
+      "concepto": "Consumo LHD 3-4 yd3",
+      "valor": "12-18 gal/h",
+      "fuente": "CostMine handbook",
+      "tabla": "Cost model",
+      "pagina": "83",
+      "cita": "",
+      "verificar": "Ferreyros catalogo"
+    },
+    {
+      "concepto": "Mantenimiento LHD 3-4 yd3",
+      "valor": "12-16 US$/h",
+      "fuente": "CostMine handbook",
+      "tabla": "Maint.",
+      "pagina": "85",
+      "cita": "",
+      "verificar": "Contrato MARC Ferreyros"
+    },
+    {
+      "concepto": "Neumaticos",
+      "valor": "US$ 16 000/juego, 2000-3000 h",
+      "fuente": "CostMine handbook",
+      "tabla": "Tire",
+      "pagina": "88",
+      "cita": "Michelin XKD1A 17.5 R25",
+      "verificar": "Michelin Peru"
+    },
+    {
+      "concepto": "Precio LHD 13-15 t (base)",
+      "valor": "AUS$ 1 M (2010)",
+      "fuente": "UWA_2013_Electric_LHDs_Cost_Benefit_Analysis.pdf",
+      "tabla": "2.3",
+      "pagina": "24",
+      "cita": "Jacobs 2013",
+      "verificar": "Escalar a 2026"
+    },
+    {
+      "concepto": "Precio Toro LH307",
+      "valor": "US$ 950 000",
+      "fuente": "Estimacion",
+      "tabla": "-",
+      "pagina": "-",
+      "cita": "Orden de magnitud",
+      "verificar": "Sandvik del Peru: (01) 411-4200, info.peru@sandvik.com"
+    },
+    {
+      "concepto": "Precio Epiroc ST7",
+      "valor": "US$ 920 000",
+      "fuente": "Estimacion",
+      "tabla": "-",
+      "pagina": "-",
+      "cita": "",
+      "verificar": "Epiroc Peru: (01) 411-6100, contacto.peru@epiroc.com"
+    },
+    {
+      "concepto": "Precio Cat R1300G",
+      "valor": "US$ 880 000",
+      "fuente": "Estimacion",
+      "tabla": "-",
+      "pagina": "-",
+      "cita": "",
+      "verificar": "Ferreyros: (01) 626-5000, ventas.mineria@ferreyros.com.pe"
+    },
+    {
+      "concepto": "Precio Toro LH203",
+      "valor": "US$ 620 000",
+      "fuente": "Estimacion",
+      "tabla": "-",
+      "pagina": "-",
+      "cita": "Proporcional a tamaño",
+      "verificar": "Sandvik del Peru"
+    },
+    {
+      "concepto": "Precio ST7 Battery / Artisan A10",
+      "valor": "1.65 M / 2.10 M",
+      "fuente": "Estimacion",
+      "tabla": "-",
+      "pagina": "-",
+      "cita": "Equipos BEV tienen CAPEX aprox. 1.8x a 2x vs diesel",
+      "verificar": "Fabricantes (Sandvik/Epiroc)"
+    },
+    {
+      "concepto": "Precio scoop electrico 2.2 yd3 (cable / STB)",
+      "valor": "350 k / 410 k",
+      "fuente": "Estimacion",
+      "tabla": "-",
+      "pagina": "-",
+      "cita": "STB documentado en US$ 60 mil; scoop base estimado",
+      "verificar": "BEV del Peru"
+    },
+    {
+      "concepto": "Precio diesel",
+      "valor": "US$ 1.50/gal",
+      "fuente": "Estimacion",
+      "tabla": "-",
+      "pagina": "-",
+      "cita": "Base SRK 2022 + inflacion",
+      "verificar": "Osinergmin observatorio de combustibles"
+    },
+    {
+      "concepto": "Precio energia electrica",
+      "valor": "US$ 0.12/kWh",
+      "fuente": "Estimacion",
+      "tabla": "-",
+      "pagina": "-",
+      "cita": "Tarifa minera referencial",
+      "verificar": "Osinergmin / contrato de suministro"
+    },
+    {
+      "concepto": "Salario operador",
+      "valor": "US$ 1 900/mes",
+      "fuente": "Estimacion",
+      "tabla": "-",
+      "pagina": "-",
+      "cita": "Incluye beneficios",
+      "verificar": "Convenio colectivo / INEI"
+    },
+    {
+      "concepto": "Dimensiones scoops electricos 2.2 yd3",
+      "valor": "1750 x 2000 x 7500 mm, 55 kW",
+      "fuente": "Estimacion para la clase",
+      "tabla": "-",
+      "pagina": "-",
+      "cita": "No hay ficha del equipo de Orcopampa",
+      "verificar": "BEV del Peru / fabricante"
+    },
+    {
+      "concepto": "Caterpillar - Ferreyros",
+      "valor": "Av. Cristobal de Peralta Norte 820, Surco",
+      "fuente": "(01) 626-5000",
+      "tabla": "ventas.mineria@ferreyros.com.pe",
+      "pagina": "",
+      "cita": "https://www.ferreyros.com.pe",
+      "verificar": ""
+    },
+    {
+      "concepto": "Sandvik del Peru",
+      "valor": "Av. Jose Galvez Barrenechea 1075, San Isidro",
+      "fuente": "(01) 411-4200",
+      "tabla": "info.peru@sandvik.com",
+      "pagina": "",
+      "cita": "https://www.rocktechnology.sandvik",
+      "verificar": ""
+    },
+    {
+      "concepto": "Epiroc Peru",
+      "valor": "Av. Los Rosales 235, Lurin",
+      "fuente": "(01) 411-6100",
+      "tabla": "contacto.peru@epiroc.com",
+      "pagina": "",
+      "cita": "https://www.epiroc.com/es-pe",
+      "verificar": ""
+    },
+    {
+      "concepto": "Komatsu-Mitsui",
+      "valor": "Av. Argentina 4045, Callao",
+      "fuente": "(01) 613-1200",
+      "tabla": "ventas@komatsumitsui.com.pe",
+      "pagina": "",
+      "cita": "https://www.komatsumitsui.com.pe",
+      "verificar": ""
+    }
+  ]
+}

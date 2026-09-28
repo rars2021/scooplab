@@ -1,0 +1,26 @@
+{
+  "origen": "Caso_Practico_Scoop_Uchucchacua v3.xlsx",
+  "secciones": [
+    {
+      "clave": "rampa_fernando",
+      "nombre": "Rampa Fernando (principal)",
+      "ancho_mm": 4000.0,
+      "alto_mm": 4000.0,
+      "critica": false
+    },
+    {
+      "clave": "rampas_positivas_a_tajos",
+      "nombre": "Rampas positivas a tajos",
+      "ancho_mm": 3000.0,
+      "alto_mm": 3700.0,
+      "critica": false
+    },
+    {
+      "clave": "labor_de_produccion_ventanas",
+      "nombre": "Labor de produccion / ventanas",
+      "ancho_mm": 3000.0,
+      "alto_mm": 3000.0,
+      "critica": true
+    }
+  ]
+}

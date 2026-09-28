@@ -1,0 +1,20 @@
+# Compilacion PyInstaller: se regenera con build.spec
+build/
+dist/
+*.exe
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.venv/
+
+# Editor y SO
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
+*.swp
+*~
