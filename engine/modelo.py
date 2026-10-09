@@ -32,6 +32,15 @@ def _rutas_datos() -> tuple[Path, Path]:
                 shutil.copytree(fabrica, trabajo)
             except Exception:
                 trabajo = fabrica          # ultimo recurso: solo lectura
+        else:
+            # carpeta de una version anterior: se agregan los JSON que no existian
+            import shutil
+            for f in fabrica.glob("*.json"):
+                if not (trabajo / f.name).exists():
+                    try:
+                        shutil.copy2(f, trabajo / f.name)
+                    except Exception:
+                        pass
         return fabrica, trabajo
     raiz = Path(__file__).resolve().parent.parent
     return raiz / "datos", raiz / "datos"
