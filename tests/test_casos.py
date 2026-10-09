@@ -21,8 +21,8 @@ def m():
     return Modelo()
 
 
-def test_hay_tres_casos_y_el_primero_es_la_rampa_fernando(m):
-    assert [c["id"] for c in m.casos] == ["rampa_fernando", "subida", "ventana_negativa"]
+def test_casos_disponibles_y_el_primero_es_la_rampa_fernando(m):
+    assert [c["id"] for c in m.casos] == ["rampa_fernando", "subida", "ventana_negativa", "ciclo_minado"]
     assert m.caso == "rampa_fernando"
 
 

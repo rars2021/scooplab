@@ -319,6 +319,17 @@ input[type="range"]::-moz-range-thumb{width:9px;height:14px;border:none;border-r
   letter-spacing:1.1px;font-weight:700;color:var(--ink-strong)}
 #casos select{width:calc(100% - 16px);margin:8px;background:var(--panel-2);color:var(--ink-strong);
   border:1px solid var(--rule);padding:4px 6px;font:inherit;font-size:11.5px}
-#casos .d{padding:0 9px 9px;font-size:11px;color:var(--muted);line-height:1.4}
+#casos .d{padding:0 9px 9px;font-size:11px;color:var(--muted);line-height:1.4;max-height:calc(100vh - 500px);overflow:auto}
 #casos .d .kv2{display:grid;grid-template-columns:1fr auto;gap:1px 8px;margin-top:6px;font-family:var(--mono);font-size:10.5px}
 #casos .d .kv2 b{color:var(--ink-strong);font-weight:600;text-align:right}
+
+/* ---------------- ETAPAS DEL CICLO DE MINADO ---------------- */
+#etapasMina{pointer-events:auto;display:flex;gap:0;background:var(--panel);border:1px solid var(--rule);box-shadow:var(--sombra)}
+#etapasMina[hidden]{display:none}
+#etapasMina button{background:transparent;border:0;border-left:1px solid var(--rule);padding:4px 11px;font:inherit;
+  font-size:11px;color:var(--muted);text-align:left;line-height:1.25}
+#etapasMina button:first-child{border-left:0}
+#etapasMina button small{display:block;font-family:var(--mono);font-size:9.5px}
+#etapasMina button.sel{background:var(--panel-2);color:var(--accent);font-weight:600}
+#etapasMina button:hover{color:var(--ink-strong)}
+#casos .d .mina{margin-top:7px;padding-top:6px;border-top:1px solid var(--rule)}

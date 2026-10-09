@@ -151,6 +151,32 @@
       },
       "nota": null
     },
+    "9": {
+      "documento": "Artisan A10 - Battery Electric 10 Tonne LHD",
+      "id": "A10 Technical Specification",
+      "fecha": "09/2019",
+      "editor": "Artisan Vehicles (Sandvik Mining and Rock Technology)",
+      "url": "https://drive.google.com/file/d/1ECLWcqmq5CNUoYFatU5JgjA_ue0bOEd6/view",
+      "paginas": [
+        {
+          "img": "fuentes/a10_p1.jpg",
+          "pie": "Motores y baterias",
+          "pagina": 1
+        },
+        {
+          "img": "fuentes/a10_p3.jpg",
+          "pie": "Vista del equipo y sus componentes",
+          "pagina": 3
+        },
+        {
+          "img": "fuentes/a10_p5.jpg",
+          "pie": "Dimensiones, pesos y capacidades",
+          "pagina": 5
+        }
+      ],
+      "video": null,
+      "nota": "Ficha enlazada desde artisanvehicles.com/a10 (copia de 2019 en Wayback Machine). No trae radios de giro."
+    },
     "8": {
       "documento": null,
       "paginas": [],
@@ -160,13 +186,7 @@
         "titulo": "Presentacion Scooptram ST7 Battery - Atlas Copco Peruana",
         "oficial": true
       },
-      "nota": "No encontre una ficha publica del ST7 Battery: sus cotas vienen del Excel y el radio interior es estimado."
-    },
-    "9": {
-      "documento": null,
-      "paginas": [],
-      "video": null,
-      "nota": "No encontre una ficha publica del Artisan A10: sus cotas vienen del Excel y el radio interior es estimado."
+      "nota": "Sin ficha publica del ST7 Battery: no esta en epiroc.com, en su repositorio de documentos ni en Wayback Machine (solo la del ST7 diesel, con el que comparte chasis). Sus cotas vienen del Excel y el radio interior es estimado."
     }
   },
   "ventanas": {

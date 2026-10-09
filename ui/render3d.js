@@ -1,10 +1,8 @@
 /* ============================================================================
    Render 3D — fondo permanente de la aplicacion.
 
-   Los equipos se CONSTRUYEN desde sus cotas reales del catalogo: no hay modelos
-   externos. La geometria sigue la silueta de un cargador de bajo perfil real:
-   cuchara de perfil curvo extruido, brazo con cilindros hidraulicos, ROPS,
-   chasis articulado con paneles inclinados y neumaticos con banda de rodadura.
+   Los equipos se construyen por codigo en equipo3d.js, desde sus cotas del
+   catalogo y los rasgos de cada modelo (modelos.js): no hay modelos externos.
 
    Cuatro modos:
      ficha        una unidad dentro del tunel de seccion, con cotas
@@ -16,9 +14,11 @@
    index.html hacia ui/vendor/. Las camaras viven en camaras.js.
    ========================================================================= */
 import * as THREE from "three";
-import { Red, construirRed, tramosDeMarcha, poseEn, redDeCiclo } from "./red3d.js";
+import { Red, construirRed, tramosDeMarcha, poseEn, redDeCiclo, AVANCE } from "./red3d.js";
+import { construirEquipo, MAT, claro } from "./equipo3d.js";
 import { crearCamaras } from "./camaras.js";
 import { crearMinimapa } from "./minimapa.js";
+import { crearMinado } from "./minado3d.js";
 
 const Render3D = (() => {
   let ren, esc, cam, lienzo;
@@ -47,525 +47,6 @@ const Render3D = (() => {
     };
   }
   const M = mm => (mm || 0) / 1000;
-
-  /* ------------------------------------------------ materiales --------- */
-  /* Los materiales siguen el tema: en claro se aclaran las chapas y baja el
-     metalness, porque un gris de tema oscuro sobre fondo blanco se lee negro. */
-  const claro = () => document.documentElement.getAttribute("data-theme") === "light";
-
-  const MAT = {
-    acero: (c) => new THREE.MeshStandardMaterial({
-      color: c, metalness: claro() ? 0.30 : 0.55, roughness: claro() ? 0.55 : 0.48 }),
-    mate: (c) => new THREE.MeshStandardMaterial({
-      color: c, metalness: 0.12, roughness: 0.85 }),
-    caucho: () => new THREE.MeshStandardMaterial({
-      color: claro() ? 0x2b2f35 : 0x1b1e23, metalness: 0.05, roughness: 0.95 }),
-    cromo: () => new THREE.MeshStandardMaterial({
-      color: claro() ? 0xe3e7ec : 0xc8cdd4, metalness: 0.85, roughness: 0.18 }),
-  };
-  // chapa principal y sombras, un par de escalones mas claros en tema claro
-  const GRIS = () => (claro() ? 0x737c88 : 0x666e79);
-  const GRIS_OSC = () => (claro() ? 0x4d555f : 0x3d434b);
-  const luz = c => new THREE.MeshBasicMaterial({ color: c });
-
-  /** Prisma con aristas biseladas: evita el aspecto de cubo plano. */
-  function bloque(l, h, a, mat, bisel = 0.035) {
-    // shape-x = ancho (acaba en Z), shape-y = alto (queda en Y), depth = largo (va a X)
-    const f = new THREE.Shape();
-    const b = Math.min(bisel, h / 2.6, a / 2.6);
-    const ha = a / 2, hh = h / 2;
-    f.moveTo(-ha + b, -hh); f.lineTo(ha - b, -hh);
-    f.quadraticCurveTo(ha, -hh, ha, -hh + b);
-    f.lineTo(ha, hh - b); f.quadraticCurveTo(ha, hh, ha - b, hh);
-    f.lineTo(-ha + b, hh); f.quadraticCurveTo(-ha, hh, -ha, hh - b);
-    f.lineTo(-ha, -hh + b); f.quadraticCurveTo(-ha, -hh, -ha + b, -hh);
-    const g = new THREE.ExtrudeGeometry(f, { depth: l, bevelEnabled: false, curveSegments: 3 });
-    g.rotateY(Math.PI / 2); g.translate(-l / 2, 0, 0);
-    const m = new THREE.Mesh(g, mat);
-    m.castShadow = true;
-    return m;
-  }
-
-  /** Panel trapezoidal: capós y guardabarros inclinados. */
-  function cuna(l, h1, h2, a, mat) {
-    // perfil lateral en XY (largo x alto) extruido a lo ancho en Z
-    const f = new THREE.Shape();
-    f.moveTo(0, -h1 / 2); f.lineTo(l, -h2 / 2); f.lineTo(l, h2 / 2); f.lineTo(0, h1 / 2);
-    const g = new THREE.ExtrudeGeometry(f, { depth: a, bevelEnabled: false });
-    g.translate(0, 0, -a / 2);
-    return new THREE.Mesh(g, mat);
-  }
-
-  /**
-   * Cuchara de perfil curvo: no es una caja. Se extruye el perfil lateral real
-   * (dorso recto, panza curva, labio recto con dientes) a lo ancho.
-   */
-  function cuchara(volumen, anchoMax, mat, colLabio) {
-    const g = new THREE.Group();
-    const ancho = Math.min(anchoMax, Math.cbrt(volumen) * 1.62);
-    const esc = Math.cbrt(volumen / 3.1);
-    const P = 1.32 * esc;            // profundidad
-    const A = 1.05 * esc;            // altura del dorso
-
-    const perfil = new THREE.Shape();
-    perfil.moveTo(0, A);                                  // borde superior trasero
-    perfil.lineTo(P * 0.30, A);                           // techo corto
-    perfil.quadraticCurveTo(P * 0.86, A * 0.86, P, A * 0.30);  // dorso curvo
-    perfil.lineTo(P * 1.05, 0.02);                        // hacia el labio
-    perfil.lineTo(P * 0.30, -A * 0.12);                   // panza
-    perfil.quadraticCurveTo(-0.05, -A * 0.10, 0, A * 0.30);    // talon curvo
-    perfil.lineTo(0, A);
-
-    const geo = new THREE.ExtrudeGeometry(perfil, {
-      depth: ancho, bevelEnabled: true, bevelThickness: 0.012,
-      bevelSize: 0.012, bevelSegments: 1, curveSegments: 14,
-    });
-    // el perfil lateral vive en XY y la extrusion da el ancho en Z: sin rotar
-    geo.translate(0, 0, -ancho / 2);
-    const cuerpo = new THREE.Mesh(geo, mat);
-    cuerpo.castShadow = true;
-    g.add(cuerpo);
-
-    // labio y dientes
-    const labio = bloque(P * 0.10, A * 0.11, ancho * 1.005, MAT.acero(colLabio), 0.01);
-    labio.position.set(P * 1.04, -0.01, 0);
-    g.add(labio);
-    const nd = Math.max(4, Math.round(ancho / 0.34));
-    for (let i = 0; i < nd; i++) {
-      const z = -ancho / 2 + ancho * ((i + 0.5) / nd);
-      const d = new THREE.Mesh(
-        new THREE.ConeGeometry(A * 0.055, A * 0.17, 4),
-        MAT.acero(0x9aa3ad));
-      d.rotation.z = -Math.PI / 2;
-      d.position.set(P * 1.12, -0.02, z);
-      g.add(d);
-    }
-    // nervios del dorso
-    [-0.3, 0.3].forEach(f => {
-      const n = bloque(P * 0.9, 0.035, 0.05, MAT.acero(GRIS_OSC()), 0.008);
-      n.position.set(P * 0.5, A * 0.55, ancho * f);
-      g.add(n);
-    });
-    // planchas laterales de desgaste y regla bajo el talon
-    [-1, 1].forEach(s => {
-      const pl = bloque(P * 0.55, A * 0.34, 0.03, MAT.acero(GRIS_OSC()), 0.006);
-      pl.position.set(P * 0.70, A * 0.16, s * (ancho / 2 + 0.012));
-      pl.rotation.z = -0.16;
-      g.add(pl);
-    });
-    for (let i = 0; i < 3; i++) {
-      const rg = bloque(P * 0.5, 0.025, ancho * 0.10, MAT.acero(GRIS_OSC()), 0.004);
-      rg.position.set(P * 0.62, -A * 0.105, ancho * (-0.3 + i * 0.3));
-      rg.rotation.z = 0.10;
-      g.add(rg);
-    }
-    g.userData = { ancho, P, A };
-    return g;
-  }
-
-  /** Cilindro hidraulico telescopico entre dos puntos. */
-  function hidraulico(r, largo, extension = 0.45) {
-    const g = new THREE.Group();
-    const camisa = new THREE.Mesh(
-      new THREE.CylinderGeometry(r, r, largo * (1 - extension), 14), MAT.acero(GRIS_OSC()));
-    camisa.position.x = -largo * extension / 2;
-    camisa.rotation.z = Math.PI / 2;
-    const vastago = new THREE.Mesh(
-      new THREE.CylinderGeometry(r * 0.52, r * 0.52, largo * extension * 1.25, 12), MAT.cromo());
-    vastago.position.x = largo * (0.5 - extension * 0.18);
-    vastago.rotation.z = Math.PI / 2;
-    g.add(camisa, vastago);
-    return g;
-  }
-
-  /** Neumatico de bajo perfil con banda de rodadura y llanta. */
-  function rueda(r, ancho) {
-    const g = new THREE.Group();
-    const n = new THREE.Mesh(new THREE.CylinderGeometry(r, r, ancho, 30), MAT.caucho());
-    n.rotation.x = Math.PI / 2;
-    n.castShadow = true;
-    g.add(n);
-    // tacos
-    const tacos = 16;
-    for (let i = 0; i < tacos; i++) {
-      const a = (i / tacos) * Math.PI * 2;
-      const t = new THREE.Mesh(
-        new THREE.BoxGeometry(r * 0.17, r * 0.10, ancho * 0.88),
-        MAT.mate(claro() ? 0x5a616a : 0x24282e));
-      t.position.set(Math.cos(a) * r * 0.99, Math.sin(a) * r * 0.99, 0);
-      t.rotation.z = a;
-      g.add(t);
-    }
-    const llanta = new THREE.Mesh(
-      new THREE.CylinderGeometry(r * 0.56, r * 0.56, ancho * 1.04, 20), MAT.acero(0x7d858f));
-    llanta.rotation.x = Math.PI / 2;
-    g.add(llanta);
-    const cubo = new THREE.Mesh(
-      new THREE.CylinderGeometry(r * 0.2, r * 0.2, ancho * 1.12, 12), MAT.acero(0x99a1aa));
-    cubo.rotation.x = Math.PI / 2;
-    g.add(cubo);
-    // aro del talon y pernos, a los dos lados
-    const matPerno = MAT.acero(0x4a5059);
-    [-1, 1].forEach(s => {
-      const aro = new THREE.Mesh(new THREE.TorusGeometry(r * 0.56, r * 0.035, 6, 22), MAT.acero(0x5f6771));
-      aro.position.z = s * ancho * 0.52;
-      g.add(aro);
-      for (let i = 0; i < 8; i++) {
-        const a = (i / 8) * Math.PI * 2;
-        const pn = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.035, r * 0.035, 0.03, 6), matPerno);
-        pn.rotation.x = Math.PI / 2;
-        pn.position.set(Math.cos(a) * r * 0.38, Math.sin(a) * r * 0.38, s * ancho * 0.535);
-        g.add(pn);
-      }
-    });
-    return g;
-  }
-
-  /* ------------------------------------------------ equipo -------------- */
-  /**
-   * Cargador de bajo perfil articulado, a escala de sus cotas.
-   * Devuelve un grupo con partes nombradas para poder animarlas.
-   */
-  function construirEquipo(eq, opts = {}) {
-    const p = paleta();
-    const L = M(eq.largo_mm), W = M(eq.ancho_mm), H = M(eq.alto_mm);
-    const acento = eq.energia === "Diesel" ? p.warn
-      : eq.energia === "Bateria" ? p.ok : p.acento;
-    const colAcento = new THREE.Color(acento);
-
-    const g = new THREE.Group();
-    const rR = Math.min(H * 0.33, L * 0.093);       // radio de rueda
-    const anchoR = W * 0.20;
-    const yEje = rR;
-    const hCh = H * 0.34;                            // altura del chasis
-    const yCh = yEje + hCh * 0.28;
-
-    const xTrasFin = -L / 2 + L * 0.46;              // fin del cuerpo trasero
-    const xArt = xTrasFin;                           // articulacion
-    const xDelFin = xArt + L * 0.26;
-
-    // Los dos bastidores giran alrededor de la articulacion: `T` y `F` reciben
-    // las piezas en coordenadas del equipo y su pivote las hace quebrar en curva.
-    const bastidor = () => {
-      const piv = new THREE.Group(); piv.position.x = xArt;
-      const dentro = new THREE.Group(); dentro.position.x = -xArt;
-      piv.add(dentro); g.add(piv);
-      return [piv, dentro];
-    };
-    const [pivT, T] = bastidor();
-    const [pivF, F] = bastidor();
-
-    // ---------------- cuerpo trasero: motor o banco de baterias ----------
-    const lTras = L * 0.46;
-    const tras = bloque(lTras * 0.92, hCh, W * 0.90, MAT.acero(GRIS()));
-    tras.position.set(-L / 2 + lTras * 0.46, yCh, 0);
-    T.add(tras);
-
-    // capo inclinado (diesel alto, bateria bajo y plano)
-    const hCapo = eq.energia === "Diesel" ? H * 0.24 : H * 0.13;
-    const capo = cuna(lTras * 0.66, hCapo * 0.55, hCapo, W * 0.80, MAT.acero(GRIS_OSC()));
-    capo.position.set(-L / 2 + lTras * 0.10, yCh + hCh / 2 + hCapo / 2, 0);
-    T.add(capo);
-
-    // rejilla del radiador o del pack
-    const rejilla = bloque(0.06, hCapo * 0.62, W * 0.58, MAT.mate(claro() ? 0x656d77 : 0x22262b), 0.01);
-    rejilla.position.set(-L / 2 + 0.05, yCh + hCh / 2 + hCapo * 0.5, 0);
-    T.add(rejilla);
-    for (let i = 0; i < 6; i++) {
-      const b = bloque(0.02, hCapo * 0.06, W * 0.54, MAT.acero(GRIS_OSC()), 0.004);
-      b.position.set(-L / 2 + 0.075, yCh + hCh / 2 + hCapo * (0.22 + i * 0.11), 0);
-      T.add(b);
-    }
-
-    // guardabarros traseros
-    [-1, 1].forEach(s => {
-      const gb = cuna(rR * 2.3, hCh * 0.30, hCh * 0.16, anchoR * 1.15, MAT.acero(GRIS_OSC()));
-      gb.position.set(-L / 2 + lTras * 0.34, yEje + rR * 1.06, s * (W / 2 - anchoR * 0.55));
-      T.add(gb);
-    });
-
-    // ---------------- articulacion ---------------------------------------
-    const junta = new THREE.Mesh(
-      new THREE.CylinderGeometry(W * 0.085, W * 0.085, hCh * 1.12, 18), MAT.acero(colAcento));
-    junta.position.set(xArt, yCh, 0);
-    g.add(junta);
-    // cilindros de direccion
-    [-1, 1].forEach(s => {
-      const cd = hidraulico(0.042, L * 0.14, 0.4);
-      cd.position.set(xArt - L * 0.07, yCh + hCh * 0.10, s * W * 0.30);
-      cd.rotation.y = s * 0.20;
-      g.add(cd);
-    });
-
-    // ---------------- cuerpo delantero -----------------------------------
-    const lDel = L * 0.26;
-    const del = bloque(lDel * 0.94, hCh * 0.88, W * 0.90, MAT.acero(GRIS()));
-    del.position.set(xArt + lDel * 0.5, yCh, 0);
-    F.add(del);
-
-    // cabina lateral con ROPS: marco de postes y techo, no una caja
-    const hCab = H * 0.34, zCab = -W * 0.26;
-    const piso = bloque(lDel * 0.56, 0.05, W * 0.34, MAT.acero(GRIS_OSC()), 0.01);
-    piso.position.set(xArt + lDel * 0.44, yCh + hCh * 0.46, zCab);
-    F.add(piso);
-    const techo = bloque(lDel * 0.60, 0.055, W * 0.36, MAT.acero(colAcento), 0.012);
-    techo.position.set(xArt + lDel * 0.44, yCh + hCh * 0.46 + hCab, zCab);
-    F.add(techo);
-    [[-1, -1], [-1, 1], [1, -1], [1, 1]].forEach(([sx, sz]) => {
-      const poste = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.028, 0.028, hCab, 8), MAT.acero(GRIS_OSC()));
-      poste.position.set(xArt + lDel * 0.44 + sx * lDel * 0.26,
-                         yCh + hCh * 0.46 + hCab / 2, zCab + sz * W * 0.16);
-      F.add(poste);
-    });
-    // asiento y consola
-    const asiento = bloque(0.26, 0.30, 0.26, MAT.mate(claro() ? 0x5e666f : 0x2c3138), 0.03);
-    asiento.position.set(xArt + lDel * 0.36, yCh + hCh * 0.46 + 0.19, zCab);
-    F.add(asiento);
-
-    // ---------------- brazo, cilindros y cuchara -------------------------
-    const brazoGrupo = new THREE.Group();
-    brazoGrupo.position.set(xDelFin - L * 0.02, yCh + hCh * 0.10, 0);
-
-    const lBrazo = L * 0.22;
-    [-1, 1].forEach(s => {
-      // brazo en dos tramos, con quiebre: silueta de boom real
-      const t1 = bloque(lBrazo * 0.58, 0.085, 0.075, MAT.acero(GRIS()), 0.015);
-      t1.position.set(lBrazo * 0.29, 0.02, s * W * 0.30);
-      t1.rotation.z = 0.10;
-      const t2 = bloque(lBrazo * 0.48, 0.075, 0.068, MAT.acero(GRIS()), 0.015);
-      t2.position.set(lBrazo * 0.79, -0.08, s * W * 0.30);
-      t2.rotation.z = -0.22;
-      brazoGrupo.add(t1, t2);
-      // cilindro de levante
-      const cl = hidraulico(0.052, lBrazo * 0.62, 0.42);
-      cl.position.set(lBrazo * 0.30, -0.16, s * W * 0.235);
-      cl.rotation.z = 0.30;
-      brazoGrupo.add(cl);
-    });
-    // travesaño del brazo
-    const trav = bloque(0.09, 0.07, W * 0.62, MAT.acero(GRIS_OSC()), 0.012);
-    trav.position.set(lBrazo * 0.52, -0.02, 0);
-    brazoGrupo.add(trav);
-
-    // cuchara articulada al extremo del brazo
-    const cuchGrupo = new THREE.Group();
-    const cu = cuchara(eq.cuchara_m3 || 3, W * 0.99, MAT.acero(colAcento), 0x9aa3ad);
-    cuchGrupo.add(cu);
-    cuchGrupo.position.set(lBrazo * 1.02, -0.20, 0);
-    brazoGrupo.add(cuchGrupo);
-    // cilindro de volteo
-    const cv = hidraulico(0.045, lBrazo * 0.42, 0.45);
-    cv.position.set(lBrazo * 0.74, 0.16, 0);
-    cv.rotation.z = -0.32;
-    brazoGrupo.add(cv);
-
-    F.add(brazoGrupo);
-
-    // ---------------- ruedas ---------------------------------------------
-    const ejes = [-L / 2 + lTras * 0.30, xArt + lDel * 0.55];
-    const ruedas = [];
-    ejes.forEach(x => {
-      [-1, 1].forEach(s => {
-        const r = rueda(rR, anchoR);
-        r.position.set(x, yEje, s * (W / 2 - anchoR * 0.48));
-        (x < xArt ? T : F).add(r);
-        ruedas.push(r);
-      });
-    });
-
-    // ---------------- distintivos por energia -----------------------------
-    const extras = {};
-    if (eq.energia === "Diesel") {
-      const tubo = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.052, 0.058, H * 0.34, 12), MAT.acero(claro() ? 0x6e767f : 0x2b2f35));
-      tubo.position.set(-L / 2 + lTras * 0.22,
-                        yCh + hCh / 2 + hCapo + H * 0.15, W * 0.27);
-      T.add(tubo);
-      const silenciador = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.10, 0.10, H * 0.20, 14), MAT.acero(GRIS_OSC()));
-      silenciador.position.set(-L / 2 + lTras * 0.22,
-                               yCh + hCh / 2 + hCapo * 0.6, W * 0.27);
-      T.add(silenciador);
-      const humo = new THREE.Group();
-      for (let i = 0; i < 10; i++) {
-        const sp = new THREE.Mesh(
-          new THREE.SphereGeometry(0.06 + i * 0.024, 7, 7),
-          new THREE.MeshBasicMaterial({ color: 0x8b939d, transparent: true, opacity: 0.30 }));
-        sp.userData.base = i * 0.2;
-        humo.add(sp);
-      }
-      humo.position.copy(tubo.position);
-      humo.position.y += H * 0.18;
-      T.add(humo);
-      extras.humo = humo;
-
-    } else if (eq.energia === "Electrico-cable") {
-      const carrete = new THREE.Mesh(
-        new THREE.CylinderGeometry(H * 0.16, H * 0.16, W * 0.34, 22), MAT.acero(colAcento));
-      carrete.rotation.x = Math.PI / 2;
-      carrete.position.set(-L / 2 + lTras * 0.16, yCh + hCh * 0.62, 0);
-      T.add(carrete);
-      [-1, 1].forEach(s => {
-        const brida = new THREE.Mesh(
-          new THREE.CylinderGeometry(H * 0.19, H * 0.19, 0.03, 22), MAT.acero(GRIS_OSC()));
-        brida.rotation.x = Math.PI / 2;
-        brida.position.set(-L / 2 + lTras * 0.16, yCh + hCh * 0.62, s * W * 0.17);
-        T.add(brida);
-      });
-      extras.cable = { metros: (eq.render && eq.render.cable_m) || 120, L, lTras };
-
-    } else if (eq.energia === "Bateria") {
-      const pack = bloque(lTras * 0.56, H * 0.16, W * 0.76, MAT.acero(colAcento), 0.02);
-      pack.position.set(-L / 2 + lTras * 0.44, yCh + hCh / 2 + H * 0.08, 0);
-      T.add(pack);
-      for (let i = 0; i < 4; i++) {
-        const celda = bloque(lTras * 0.11, H * 0.17, W * 0.72, MAT.acero(GRIS_OSC()), 0.012);
-        celda.position.set(-L / 2 + lTras * (0.22 + i * 0.145), yCh + hCh / 2 + H * 0.08, 0);
-        T.add(celda);
-      }
-      extras.bateria = { x: -L / 2 + lTras * 0.44, y: H + 0.5 };
-    }
-
-    // ---------------- detalle: lo que hace reconocible a un LHD ----------
-    const xCola = -L / 2;
-    // contrapeso con franjas de seguridad
-    const contra = bloque(0.10, hCh * 0.62, W * 0.92, MAT.acero(GRIS_OSC()), 0.02);
-    contra.position.set(xCola - 0.02, yCh - hCh * 0.10, 0);
-    T.add(contra);
-    for (let i = 0; i < 8; i++) {
-      const fr = bloque(0.02, hCh * 0.16, W * 0.105, MAT.mate(i % 2 ? 0x1b1e23 : 0xd9a81e), 0.003);
-      fr.position.set(xCola - 0.075, yCh - hCh * 0.30, -W * 0.40 + i * W * 0.114);
-      T.add(fr);
-    }
-    // luces traseras, gancho de remolque y baliza
-    [-1, 1].forEach(s => {
-      const lt = bloque(0.03, 0.07, 0.13, luz(0xd23b2e), 0.004);
-      lt.position.set(xCola - 0.075, yCh + hCh * 0.10, s * W * 0.36);
-      T.add(lt);
-      const lb = bloque(0.03, 0.07, 0.09, luz(0xfff1cf), 0.004);
-      lb.position.set(xCola - 0.075, yCh + hCh * 0.10, s * W * 0.24);
-      T.add(lb);
-    });
-    const gancho = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.022, 6, 12), MAT.acero(0x8a929b));
-    gancho.rotation.y = Math.PI / 2;
-    gancho.position.set(xCola - 0.09, yCh - hCh * 0.02, 0);
-    T.add(gancho);
-    // persianas laterales del capo y tapas de inspeccion
-    [-1, 1].forEach(s => {
-      for (let i = 0; i < 5; i++) {
-        const pe = bloque(lTras * 0.07, hCh * 0.46, 0.018, MAT.mate(claro() ? 0x363b42 : 0x1d2025), 0.004);
-        pe.position.set(xCola + lTras * (0.14 + i * 0.095), yCh + hCh * 0.02, s * W * 0.452);
-        T.add(pe);
-      }
-      const tapa = bloque(lTras * 0.20, hCh * 0.50, 0.02, MAT.acero(GRIS_OSC()), 0.012);
-      tapa.position.set(xCola + lTras * 0.76, yCh + hCh * 0.02, s * W * 0.453);
-      T.add(tapa);
-      const manija = bloque(0.07, 0.018, 0.03, MAT.cromo(), 0.004);
-      manija.position.set(xCola + lTras * 0.82, yCh + hCh * 0.02, s * W * 0.468);
-      T.add(manija);
-    });
-    // baranda sobre el capo
-    const yCapo = yCh + hCh / 2 + hCapo;
-    const matBar = MAT.mate(0xd9a81e);
-    [-1, 1].forEach(s => {
-      const lar = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, lTras * 0.5, 6), matBar);
-      lar.rotation.z = Math.PI / 2;
-      lar.position.set(xCola + lTras * 0.50, yCapo + 0.20, s * W * 0.37);
-      T.add(lar);
-      [0.26, 0.50, 0.74].forEach(f => {
-        const pie = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.26, 6), matBar);
-        pie.position.set(xCola + lTras * f, yCapo + 0.08, s * W * 0.37);
-        T.add(pie);
-      });
-    });
-    // planchas de la articulacion
-    [-1, 1].forEach(s => {
-      const pa = bloque(L * 0.11, 0.045, W * 0.34, MAT.acero(GRIS_OSC()), 0.012);
-      pa.position.set(xArt, yCh + s * hCh * 0.50, 0);
-      g.add(pa);
-    });
-    // bastidor delantero: guardabarros, tanque hidraulico, escalera y pasamanos
-    [-1, 1].forEach(s => {
-      const gb = cuna(rR * 2.2, hCh * 0.16, hCh * 0.30, anchoR * 1.15, MAT.acero(GRIS_OSC()));
-      gb.position.set(xArt + lDel * 0.55 - rR * 1.1, yEje + rR * 1.06, s * (W / 2 - anchoR * 0.55));
-      F.add(gb);
-    });
-    const tanque = bloque(lDel * 0.50, hCab * 0.46, W * 0.30, MAT.acero(GRIS()), 0.03);
-    tanque.position.set(xArt + lDel * 0.42, yCh + hCh * 0.44 + hCab * 0.23, W * 0.27);
-    F.add(tanque);
-    const tapon = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.04, 10), MAT.cromo());
-    tapon.position.set(xArt + lDel * 0.30, yCh + hCh * 0.44 + hCab * 0.47, W * 0.27);
-    F.add(tapon);
-    const extintor = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.30, 10), MAT.mate(0xc0392b));
-    extintor.position.set(xArt + lDel * 0.72, yCh + hCh * 0.44 + 0.16, W * 0.13);
-    F.add(extintor);
-    for (let i = 0; i < 2; i++) {
-      const esc2 = bloque(0.20, 0.025, 0.07, MAT.mate(0xd9a81e), 0.004);
-      esc2.position.set(xArt + lDel * 0.44, yEje + rR * 0.25 + i * 0.26, -W * 0.475);
-      F.add(esc2);
-    }
-    const pasam = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, hCab * 0.7, 6), matBar);
-    pasam.position.set(xArt + lDel * 0.19, yCh + hCh * 0.46 + hCab * 0.36, zCab - W * 0.17);
-    F.add(pasam);
-    // cabina: respaldo de malla, consola con palancas y baliza
-    const respaldo = bloque(0.03, hCab * 0.78, W * 0.30, MAT.mate(claro() ? 0x4a515a : 0x2a2e34), 0.006);
-    respaldo.position.set(xArt + lDel * 0.19, yCh + hCh * 0.46 + hCab * 0.42, zCab);
-    F.add(respaldo);
-    const consola = bloque(0.16, 0.34, 0.20, MAT.mate(claro() ? 0x3b4149 : 0x22262b), 0.02);
-    consola.position.set(xArt + lDel * 0.62, yCh + hCh * 0.46 + 0.19, zCab);
-    F.add(consola);
-    [-1, 1].forEach(s => {
-      const pal = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.16, 6), MAT.cromo());
-      pal.position.set(xArt + lDel * 0.60, yCh + hCh * 0.46 + 0.43, zCab + s * 0.05);
-      pal.rotation.z = 0.25;
-      F.add(pal);
-    });
-    const baliza = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.08, 10), luz(0xffa41c));
-    baliza.position.set(xArt + lDel * 0.24, yCh + hCh * 0.46 + hCab + 0.07, zCab);
-    F.add(baliza);
-    // pasadores del brazo y mangueras hidraulicas
-    [-1, 1].forEach(s => {
-      [[0, 0.02], [lBrazo * 0.58, 0.05], [lBrazo * 1.02, -0.16]].forEach(([x, y]) => {
-        const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.13, 10), MAT.cromo());
-        pin.rotation.x = Math.PI / 2;
-        pin.position.set(x, y, s * W * 0.30);
-        brazoGrupo.add(pin);
-      });
-      const mang = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, lBrazo * 0.62, 6),
-        MAT.caucho());
-      mang.rotation.z = Math.PI / 2 - 0.05;
-      mang.position.set(lBrazo * 0.36, 0.085, s * (W * 0.30 - 0.05));
-      brazoGrupo.add(mang);
-    });
-
-    // punto de vista del operador, para la camara de cabina
-    const ojo = new THREE.Object3D();
-    ojo.position.set(xArt + lDel * 0.36, yCh + hCh * 0.46 + hCab * 0.74, zCab);
-    F.add(ojo);
-
-    // faros: solo donde hay galeria que iluminar
-    if (opts.faros) {
-      [-1, 1].forEach(s => {
-        const faro = new THREE.SpotLight(0xfff1d6, 55, 38, 0.6, 0.6, 1.4);
-        faro.position.set(xArt + lDel * 0.74, yCh + hCh * 0.46 + hCab + 0.06, zCab + s * W * 0.13);
-        faro.target.position.set(xDelFin + 14, 0.7, s * W * 0.25);
-        F.add(faro, faro.target);
-        const lente = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 6),
-          new THREE.MeshBasicMaterial({ color: 0xfff4dc }));
-        lente.position.copy(faro.position);
-        F.add(lente);
-      });
-    }
-
-    g.userData = {
-      cotas: { L, W, H, rR, yEje, yCh, hCh, xArt },
-      brazo: brazoGrupo, cuchara: cuchGrupo, ruedas, extras, acento,
-      frente: pivF, trasero: pivT, ojo,
-      eq,
-    };
-    return g;
-  }
 
   /* ------------------------------------------------ tunel --------------- */
   function construirTunel(sec, largo, cabe, x0 = 0) {
@@ -758,147 +239,6 @@ const Render3D = (() => {
   // `vel` multiplica el tiempo real: a 1x un minuto del ciclo dura un minuto.
   const SIM = { t: 0, play: true, seg: 90, ciclos: 6, cb: null, ultimo: 0, vel: 1 };
 
-  function montarSimulacionRecta(eq, ctx) {
-    const p = paleta();
-    const g = new THREE.Group();
-    const L = M(eq.largo_mm);
-
-    const secs = (ctx.secciones && ctx.secciones.length >= 3)
-      ? [ctx.secciones[2], ctx.secciones[1], ctx.secciones[0]]
-      : [
-          { nombre: "Labor de produccion", ancho_mm: 3000, alto_mm: 3000 },
-          { nombre: "Rampa positiva", ancho_mm: 3000, alto_mm: 3700 },
-          { nombre: "Rampa Fernando", ancho_mm: 4000, alto_mm: 4000 },
-        ];
-    const tramo = Math.max(13, L * 2.1);
-    const xs = [-tramo, 0, tramo];
-
-    secs.forEach((sec, i) => {
-      const cabe = eq.ancho_mm + 2 * (ctx.holguraLado || 300) <= sec.ancho_mm;
-      g.add(construirTunel(sec, tramo * 1.02, cabe, xs[i]));
-      const et = etiqueta(
-        sec.nombre + "  " + Math.round(sec.ancho_mm) + " x " + Math.round(sec.alto_mm) + " mm",
-        cabe ? p.apagado : p.bad, 1.4);
-      et.position.set(xs[i], M(sec.alto_mm) + 0.8, 0);
-      g.add(et);
-    });
-
-    // frente de minado con su pila
-    const xPila = xs[0] - tramo * 0.34;
-    for (let i = 0; i < 22; i++) {
-      const r = 0.15 + Math.random() * 0.22;
-      const roca = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0),
-        MAT.mate(claro() ? 0x8d96a1 : 0x545b64));
-      roca.position.set(xPila + (Math.random() - 0.5) * 1.8, r * 0.8,
-                        (Math.random() - 0.5) * 2.0);
-      roca.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
-      roca.castShadow = true;
-      g.add(roca);
-    }
-    const etF = etiqueta("frente de minado", p.warn, 1.3);
-    etF.position.set(xPila, 2.0, 0);
-    g.add(etF);
-
-    // echadero en la rampa principal
-    const xOre = xs[2] + tramo * 0.30;
-    const boca = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.15, 0.14, 26),
-      MAT.mate(claro() ? 0x6a727c : 0x14171a));
-    boca.position.set(xOre, 0.07, 0);
-    g.add(boca);
-    const aro = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.06, 8, 30), MAT.acero(p.acento));
-    aro.rotation.x = -Math.PI / 2;
-    aro.position.set(xOre, 0.11, 0);
-    g.add(aro);
-    const etO = etiqueta("echadero al pique", p.acento, 1.3);
-    etO.position.set(xOre, 1.8, 0);
-    g.add(etO);
-
-    const maq = construirEquipo(eq);
-    g.add(maq);
-
-    const fases = [
-      { id: "carga", label: "Cargando en el frente", min: ctx.t_carga || 0.6 },
-      { id: "acarreo", label: "Acarreo cargado al echadero", min: ctx.t_acarreo || 0.6 },
-      { id: "descarga", label: "Descargando en el echadero", min: ctx.t_descarga || 0.3 },
-      { id: "retorno", label: "Retorno vacio al frente", min: ctx.t_retorno || 0.4 },
-    ];
-    animables.push({
-      tipo: "sim", grupo: maq, fases,
-      totalMin: fases.reduce((a, f) => a + f.min, 0),
-      xPila, xOre, capacidad: ctx.cap_cuchara || 4.8, unidad: ctx.unidad || "TCS",
-    });
-    g.userData.extent = xOre - xPila;
-    return g;
-  }
-
-  /** Coloca la maquina para el tiempo dado. Sin estado acumulado. */
-  function aplicarSim(a, t01) {
-    const g = a.grupo, u = g.userData;
-    const total = SIM.ciclos;
-    const pos = t01 * total;
-    const ciclo = Math.min(Math.floor(pos), total - 1);
-    const dentro = pos - ciclo;
-
-    let acum = 0;
-    const tramos = a.fases.map(f => {
-      const ini = acum / a.totalMin; acum += f.min;
-      return { id: f.id, label: f.label, ini, fin: acum / a.totalMin };
-    });
-    const fase = tramos.find(f => dentro >= f.ini && dentro < f.fin) || tramos[tramos.length - 1];
-    const k = (dentro - fase.ini) / Math.max(fase.fin - fase.ini, 1e-6);
-    const suave = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-
-    const x0 = a.xPila + 1.7, x1 = a.xOre - 2.0;
-    let x = x0, brazo = 0, volteo = 0, rod = 0;
-
-    if (fase.id === "carga") {
-      x = x0;
-      brazo = Math.sin(k * Math.PI) * 0.24;
-      volteo = -Math.sin(k * Math.PI) * 0.34;
-    } else if (fase.id === "acarreo") {
-      x = x0 + suave * (x1 - x0);
-      brazo = 0.09; volteo = -0.13; rod = suave * (x1 - x0);
-    } else if (fase.id === "descarga") {
-      x = x1;
-      brazo = 0.09 + Math.sin(k * Math.PI) * 0.18;
-      volteo = -0.13 + Math.sin(k * Math.PI) * 1.15;
-    } else {
-      x = x1 - suave * (x1 - x0);
-      brazo = 0.02; volteo = -0.05; rod = -suave * (x1 - x0);
-    }
-
-    g.position.set(x, 0, 0);
-    // el giro entra y sale de forma progresiva, no de un salto
-    if (fase.id === "retorno") {
-      g.rotation.y = Math.PI * Math.min(1, Math.min(k / 0.10, (1 - k) / 0.10));
-    } else {
-      g.rotation.y = 0;
-    }
-
-    if (u.brazo) u.brazo.rotation.z = brazo;
-    if (u.cuchara) u.cuchara.rotation.z = volteo;
-    u.ruedas.forEach(r => { r.rotation.z = -rod * 0.55; });
-
-    if (!a.carga) {
-      const c = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 9),
-        MAT.mate(claro() ? 0x8d96a1 : 0x6b737d));
-      u.cuchara.add(c);
-      a.carga = c;
-    }
-    a.carga.visible = fase.id === "acarreo" || (fase.id === "descarga" && k < 0.5);
-    a.carga.position.set(0.38, 0.32, 0);
-    a.carga.scale.setScalar(Math.cbrt((a.capacidad || 4.8) / 4.8));
-
-    if (SIM.cb) SIM.cb({
-      t01, ciclo: ciclo + 1, ciclos: total,
-      fase: fase.label, id: fase.id,
-      minuto: (pos * a.totalMin).toFixed(1),
-      totalMin: (total * a.totalMin).toFixed(1),
-      masa: (ciclo * a.capacidad).toFixed(1),
-      unidad: a.unidad,
-    });
-  }
-
   /* ---------------- simulacion sobre la red de galerias ---------------- */
   /**
    * Frente -> camara de maniobra (reversa) -> rampa positiva -> Rampa Fernando
@@ -932,8 +272,21 @@ const Render3D = (() => {
     if (doc.vistas) R.vistas = doc.vistas;
     if (doc.inicio) R.nodoInicio = doc.inicio;
     R.metros = { acarreo: metros(legs.acarreo), retorno: metros(legs.retorno) };
+    // rocas sueltas: saltan de la pila a la cuchara y de la cuchara al echadero
+    const sueltas = [];
+    let sem = 23;
+    const azar = () => { sem = (sem * 16807) % 2147483647; return sem / 2147483647; };
+    const matRoca = MAT.roca();
+    for (let i = 0; i < 12; i++) {
+      const r = new THREE.Mesh(new THREE.DodecahedronGeometry(0.10 + azar() * 0.10, 0), matRoca);
+      r.userData = { dx: (azar() - 0.5) * 1.4, dz: (azar() - 0.5) * 1.6, giro: 3 + azar() * 5 };
+      r.visible = false;
+      R.grupo.add(r);
+      sueltas.push(r);
+    }
     animables.push({
-      tipo: "simred", grupo: maq, fases, legs, R,
+      pre: doc.minado ? crearMinado(R, red, doc) : null,
+      tipo: "simred", grupo: maq, fases, legs, R, sueltas,
       totalMin: fases.reduce((a, f) => a + f.min, 0),
       capacidad: ctx.cap_cuchara || 4.8, unidad: ctx.unidad || "TCS",
     });
@@ -998,15 +351,83 @@ const Render3D = (() => {
     g.position.set(q.x - _off.x, q.z - _off.y, -q.y - _off.z);
     u.frente.rotation.y = q.quiebre / 2;
     u.trasero.rotation.y = -q.quiebre / 2;
-    u.ruedas.forEach(r => { r.rotation.z = -s / c.rR; });
+    u.ruedas.forEach(r => { r.rotation.z = -s / r.userData.r; });
     a.pose = q;
+  }
+
+  const _a = new THREE.Vector3(), _b = new THREE.Vector3();
+  /**
+   * Material en movimiento. Al cargar, las rocas saltan de la pila al hueco de
+   * la cuchara; al descargar caen del labio al echadero. Es una trayectoria
+   * dibujada (funcion del tiempo), no una simulacion fisica.
+   */
+  function rocasSueltas(a, id, k) {
+    const u = a.grupo.userData, R = a.R, n = a.sueltas.length;
+    if (id !== "carga" && id !== "descarga") { a.sueltas.forEach(r => { r.visible = false; }); return; }
+    R.grupo.updateMatrixWorld(true);
+    const { P, A, ancho } = u.cuch;
+    a.sueltas.forEach((r, i) => {
+      const d = r.userData;
+      let t, desde, hasta, salto;
+      if (id === "carga") {
+        t = (k - 0.16 - i * 0.042) / 0.085;
+        desde = _a.copy(R.pPila); desde.x += d.dx * 0.6; desde.z += d.dz * 0.6;
+        hasta = R.grupo.worldToLocal(u.cuchara.localToWorld(_b.set(P * 0.55, A * 0.38, d.dz * ancho * 0.25)));
+        salto = 0.45;
+      } else {
+        t = (k - 0.40 - i * 0.022) / 0.10;
+        desde = R.grupo.worldToLocal(u.cuchara.localToWorld(_a.set(P * 0.95, A * 0.06, d.dz * ancho * 0.28)));
+        hasta = _b.copy(R.pEch); hasta.x += d.dx * 0.35; hasta.z += d.dz * 0.3; hasta.y -= 0.4;
+        salto = 0;
+      }
+      r.visible = t > 0 && t < 1;
+      if (!r.visible) return;
+      const caida = id === "descarga" ? t * t : t;        // al caer acelera
+      r.position.set(desde.x + (hasta.x - desde.x) * t,
+                     desde.y + (hasta.y - desde.y) * caida + Math.sin(Math.PI * t) * salto,
+                     desde.z + (hasta.z - desde.z) * t);
+      r.rotation.set(t * d.giro, t * d.giro * 0.7, 0);
+    });
   }
 
   /** Coloca el equipo para el tiempo dado. Sin estado acumulado. */
   function aplicarSimRed(a, t01) {
     const u = a.grupo.userData;
     const total = SIM.ciclos;
-    const pos = t01 * total;
+    // las etapas previas del ciclo de minado van antes de las cucharas
+    const durCic = total * a.totalMin * 60, durPre = a.pre ? a.pre.seg : 0;
+    const ts = t01 * (durPre + durCic);
+    let etapas = null;
+    if (a.pre) {
+      let ac = 0;
+      etapas = a.pre.lista.map(e => {
+        const ini = ac / (durPre + durCic); ac += e.seg;
+        return { id: e.id, nombre: e.nombre, min: e.min, supuesto: e.supuesto, ini, fin: ac / (durPre + durCic) };
+      });
+      const lim = a.R.red.doc.minado.fases.find(f => f.id === "limpieza");
+      etapas.push({ id: "limpieza", nombre: lim.nombre, min: lim.min, supuesto: false, ini: ac / (durPre + durCic), fin: 1 });
+      if (ts < durPre) {
+        let t0 = 0, et = a.pre.lista[a.pre.lista.length - 1], ke = 1;
+        for (const e of a.pre.lista) {
+          if (ts < t0 + e.seg) { et = e; ke = (ts - t0) / e.seg; break; }
+          t0 += e.seg;
+        }
+        a.pre.aplicar(et.id, ke);
+        const l = a.legs.acarreo[0];
+        posar(a, l.tr, l.s1);                            // el scoop espera en la camara de maniobra
+        u.brazo.rotation.z = 0.10; u.cuchara.rotation.z = 0.10; u.cuch.setCarga(0);
+        rocasSueltas(a, "", 0);
+        const h = et.min >= 60 ? (et.min / 60).toFixed(1) + " h" : et.min.toFixed(0) + " min";
+        if (SIM.cb) SIM.cb({
+          t01, ciclo: 0, ciclos: total, id: et.id, etapas, etapa: et.id,
+          fase: `${et.nombre}: ${et.detalle} · ${h} reales${et.supuesto ? " (supuesto)" : ""}, comprimido`,
+          minuto: "0.0", totalMin: (total * a.totalMin).toFixed(1), masa: "0.0", unidad: a.unidad, kmh: "0.0",
+        });
+        return;
+      }
+      a.pre.aplicar("limpieza", 1);
+    }
+    const pos = (ts - durPre) / (a.totalMin * 60);
     const ciclo = Math.min(Math.floor(pos), total - 1);
     const dentro = pos - ciclo;
 
@@ -1018,7 +439,9 @@ const Render3D = (() => {
     const fase = tramos.find(f => dentro >= f.ini && dentro < f.fin) || tramos[tramos.length - 1];
     const k = (dentro - fase.ini) / Math.max(fase.fin - fase.ini, 1e-6);
 
-    let brazo = 0, volteo = 0, marcha = "", kmh = 0;
+    // brazo: + levanta. cuchara: + recoge (labio arriba), - voltea (labio abajo).
+    let brazo = 0.10, volteo = 0.10, marcha = "", kmh = 0, llena = 0;
+    const rampa = (x, p, q) => Math.max(0, Math.min(1, (x - p) / (q - p)));
     if (fase.legs) {
       // el tiempo de la fase se reparte entre sus tramos de marcha segun lo que tardan
       const dur = fase.legs.reduce((d, l) => d + l.min, 0);
@@ -1033,31 +456,26 @@ const Render3D = (() => {
       posar(a, leg.tr, est);
       kmh = v * rel;
       marcha = leg.rev ? " (reversa)" : "";
-      if (fase.id === "acarreo") { brazo = 0.09; volteo = -0.13; }
-      else { brazo = 0.02; volteo = -0.05; }
+      if (fase.id === "acarreo") { volteo = 0.60; llena = 1; }
     } else if (fase.id === "carga") {
+      // baja la cuchara, entra en la pila, recoge girandola y retrocede
       const l = a.legs.acarreo[0];
-      posar(a, l.tr, l.s0);
-      brazo = Math.sin(k * Math.PI) * 0.24;
-      volteo = -Math.sin(k * Math.PI) * 0.34;
+      posar(a, l.tr, l.s0 + AVANCE * (rampa(k, 0.02, 0.30) - rampa(k, 0.74, 1)));
+      brazo = 0.10 - 0.10 * rampa(k, 0, 0.12) + 0.10 * rampa(k, 0.60, 1);
+      volteo = 0.10 - 0.13 * rampa(k, 0, 0.12) + 0.63 * rampa(k, 0.30, 0.70);
+      llena = rampa(k, 0.16, 0.68);
     } else {
+      // levanta, voltea sobre el echadero, espera que caiga y vuelve a nivel
       const l = a.legs.acarreo[a.legs.acarreo.length - 1];
       posar(a, l.tr, l.s1);
-      brazo = 0.09 + Math.sin(k * Math.PI) * 0.18;
-      volteo = -0.13 + Math.sin(k * Math.PI) * 1.15;
+      brazo = 0.10 + 0.35 * (rampa(k, 0, 0.35) - rampa(k, 0.80, 1));
+      volteo = 0.60 - 1.35 * rampa(k, 0.35, 0.55) + 0.85 * rampa(k, 0.80, 1);
+      llena = 1 - rampa(k, 0.40, 0.68);
     }
-    if (u.brazo) u.brazo.rotation.z = brazo;
-    if (u.cuchara) u.cuchara.rotation.z = volteo;
-
-    if (!a.carga) {
-      const c = new THREE.Mesh(new THREE.SphereGeometry(0.45, 12, 9),
-        MAT.mate(claro() ? 0x8d96a1 : 0x6b737d));
-      u.cuchara.add(c);
-      a.carga = c;
-    }
-    a.carga.visible = fase.id === "acarreo" || (fase.id === "descarga" && k < 0.5);
-    a.carga.position.set(0.38, 0.32, 0);
-    a.carga.scale.setScalar(Math.cbrt((a.capacidad || 4.8) / 4.8));
+    u.brazo.rotation.z = brazo;
+    u.cuchara.rotation.z = volteo;
+    u.cuch.setCarga(llena);
+    rocasSueltas(a, fase.id, k);
 
     if (SIM.cb) SIM.cb({
       t01, ciclo: ciclo + 1, ciclos: total,
@@ -1065,7 +483,7 @@ const Render3D = (() => {
       minuto: (pos * a.totalMin).toFixed(1),
       totalMin: (total * a.totalMin).toFixed(1),
       masa: (ciclo * a.capacidad).toFixed(1),
-      unidad: a.unidad, kmh: kmh.toFixed(1),
+      unidad: a.unidad, kmh: kmh.toFixed(1), etapas, etapa: etapas ? "limpieza" : null,
     });
     if (onFase && modo === "ciclo") onFase({
       fase: fase.label + marcha, id: fase.id, progreso: dentro,
@@ -1213,7 +631,7 @@ const Render3D = (() => {
     let theta = null;
     if ((modo === "simulacion" && ctx.red) || modo === "ciclo") {
       const R = modo === "ciclo" ? montarCicloRed(eq, sec, ctx) : montarSimRed(eq, ctx);
-      SIM.ciclos = modo === "ciclo" ? 1 : 6;
+      SIM.ciclos = modo === "ciclo" ? 1 : animables.some(x => x.pre) ? 3 : 6;
       modoRed = modo;
       raiz.add(R.grupo);
       redActual = R;
@@ -1224,14 +642,6 @@ const Render3D = (() => {
       SIM.t = recarga ? tSim : 0;
       if (!recarga) { SIM.play = true; theta = -2.2; }
       SIM.ultimo = performance.now();
-
-    } else if (modo === "simulacion") {
-      const escSim = montarSimulacionRecta(eq, ctx);
-      raiz.add(escSim);
-      orbita.radio = Math.max(32, (escSim.userData.extent || 32) * 0.92);
-      orbita.phi = 1.05;
-      orbita.objetivo.set(0, 1.3, 0);
-      SIM.t = 0; SIM.play = true; SIM.ultimo = performance.now();
 
     } else if (modo === "equivalencia" && ctx.referencia) {
       raiz.add(montarEquivalencia(eq, ctx.referencia, ctx));
@@ -1386,15 +796,10 @@ const Render3D = (() => {
     animables.forEach(a => {
       if (a.tipo === "simred") {
         // tiempo real x velocidad elegida, sobre la duracion calculada del ciclo
-        const dur = SIM.ciclos * a.totalMin * 60;
+        const dur = SIM.ciclos * a.totalMin * 60 + (a.pre ? a.pre.seg : 0);
         if (SIM.play || modo === "ciclo") SIM.t = (SIM.t + dt * SIM.vel / dur) % 1;
         SIM.ultimo = t;
         aplicarSimRed(a, SIM.t);
-      }
-      if (a.tipo === "sim") {
-        if (SIM.play) SIM.t = (SIM.t + (t - SIM.ultimo) / 1000 / SIM.seg) % 1;
-        SIM.ultimo = t;
-        aplicarSim(a, SIM.t);
       }
       const u = a.grupo && a.grupo.userData;
       if (u && u.extras && u.extras.humo) {

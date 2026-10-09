@@ -17,6 +17,12 @@
       "archivo": "casos/ventana_negativa.json",
       "nombre": "Corte y relleno: ventana negativa",
       "descripcion": "Ventana de -17 % a la veta (tesis): sale cargado en reversa y en subida, luego baja la rampa de 15 % al echadero."
+    },
+    {
+      "id": "ciclo_minado",
+      "archivo": "casos/ciclo_minado.json",
+      "nombre": "Ciclo de minado completo: tajo 6675-2",
+      "descripcion": "Taladros largos (tesis): perforacion, carguio y voladura, ventilacion, desatado y limpieza con scoop hasta el echadero."
     }
   ]
 }

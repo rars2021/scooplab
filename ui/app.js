@@ -458,6 +458,7 @@ async function iniciar() {
     if (sm) sm.hidden = b.dataset.modo !== "equivalencia";
     const rp = document.getElementById("reproductor");
     if (rp) rp.hidden = b.dataset.modo !== "simulacion";
+    if (b.dataset.modo !== "simulacion") document.getElementById("etapasMina").hidden = true;
     const sv = document.getElementById("segVel");
     if (sv) sv.hidden = b.dataset.modo !== "simulacion" && b.dataset.modo !== "ciclo";
     Render3D.setModo(b.dataset.modo);
@@ -564,6 +565,26 @@ function conectarCamaras() {
   });
 }
 
+/* ------------------------- etapas del ciclo de minado -------------------- */
+let firmaEtapas = "";
+function pintarEtapas(f) {
+  const el = document.getElementById("etapasMina");
+  if (!el) return;
+  el.hidden = !f.etapas;
+  if (!f.etapas) { firmaEtapas = ""; return; }
+  const firma = f.etapas.map(e => e.id + e.min.toFixed(1)).join("|");
+  if (firma !== firmaEtapas) {
+    firmaEtapas = firma;
+    const dur = m => (m >= 60 ? fmt.n(m / 60, 1) + " h" : fmt.n(m, 0) + " min");
+    el.innerHTML = f.etapas.map(e => `<button data-ini="${e.ini}" data-id="${e.id}"
+        data-tip="${e.supuesto ? "Duracion supuesta: la tesis no la da" : "Duracion segun la tesis o calculada"}">
+        ${fmt.esc(e.nombre)}<small>${dur(e.min)}${e.supuesto ? " *" : ""}</small></button>`).join("");
+    el.querySelectorAll("button").forEach(b => b.addEventListener("click", () =>
+      Render3D.setSimTiempo(+b.dataset.ini + 0.0005)));
+  }
+  el.querySelectorAll("button").forEach(b => b.classList.toggle("sel", b.dataset.id === f.etapa));
+}
+
 /* ------------------------- casos de simulacion --------------------------- */
 async function pintarCasos() {
   const sel = document.getElementById("selCaso"), lec = document.getElementById("casoLectura");
@@ -584,7 +605,14 @@ async function pintarCasos() {
       <span>rend. efectivo</span><b>${fmt.masa(c.rend_efectivo, 1)} ${fmt.u()}/h</b>
       <span>Excel (ciclo ${fmt.n(r.ciclo_excel, 1)} min)</span><b>${fmt.masa(r.rend_excel, 1)} ${fmt.u()}/h</b>
       <span>curvas</span><b class="${c.apto_curvas ? "ok" : "bad"}">${c.apto_curvas ? "gira en todas" : "no entra"}</b>
-    </div>`;
+    </div>${c.minado ? `<div class="kv2 mina">
+      <span>perforacion</span><b>${fmt.n(c.minado.metros_perforados, 0)} m · ${fmt.n(c.minado.fases[0].min / 60, 1)} h</b>
+      <span>mineral roto por disparo</span><b>${fmt.masa(c.minado.tcs_disparo, 0)} ${fmt.u()}</b>
+      <span>limpieza de la guardia</span><b>${c.minado.cucharas} cucharas · ${fmt.n(c.minado.limpieza_min / 60, 1)} h</b>
+      <span>aire requerido</span><b>${fmt.e(c.minado.caudal_cfm)} CFM</b>
+      <span>ciclo completo</span><b>${fmt.n(c.minado.total_min / 60, 1)} h = ${fmt.n(c.minado.guardias, 1)} guardias</b>
+      <span>un disparo alimenta</span><b>${fmt.n(c.minado.guardias_de_limpieza_por_disparo, 1)} guardias de limpieza</b>
+    </div>` : ""}`;
 }
 
 function conectarCasos() {
@@ -640,8 +668,11 @@ function conectarReproductor() {
   Render3D.alSimTick(f => {
     if (Render3D.getModo() !== "simulacion") return;
     if (!arrastrando) barra.value = Math.round(f.t01 * 1000);
-    if (lectura) {
-      lectura.innerHTML = `ciclo <b>${f.ciclo}</b>/${f.ciclos} ·
+    pintarEtapas(f);
+    if (lectura && f.ciclo === 0) {
+      lectura.innerHTML = `<span class="f">${fmt.esc(f.fase)}</span>`;
+    } else if (lectura) {
+      lectura.innerHTML = `${f.etapas ? "cuchara" : "ciclo"} <b>${f.ciclo}</b>/${f.ciclos} ·
         <span class="f">${fmt.esc(f.fase)}</span> ·
         min <b>${f.minuto}</b>/${f.totalMin} ·
         <b>${f.kmh}</b> km/h ·

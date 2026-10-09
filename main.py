@@ -22,6 +22,7 @@ sys.path.insert(0, str(RAIZ))
 
 from engine import importar as mod_importar          # noqa: E402
 from engine.matriz import Matriz                      # noqa: E402
+from engine.minado import ciclo_de_minado             # noqa: E402
 from engine.modelo import DATOS, Modelo, Parametros   # noqa: E402
 from engine.payback import Payback                    # noqa: E402
 from engine.red import velocidad_en_pendiente         # noqa: E402
@@ -135,7 +136,7 @@ class Api:
             "pases_sel": round(cap_sel / self.m.capacidad_cuchara(e), 0),
             "pases_ref": round(cap_ref / self.m.capacidad_cuchara(ref), 0),
             "referencia": {
-                "n": ref.n, "modelo": ref.modelo, "energia": ref.energia,
+                "n": ref.n, "id": ref.id, "modelo": ref.modelo, "energia": ref.energia,
                 "largo_mm": ref.largo_mm, "ancho_mm": ref.ancho_mm,
                 "alto_mm": ref.alto_mm, "cuchara_m3": ref.cuchara_m3,
                 "carga_util_kg": ref.carga_util_kg, "render": ref.render,
@@ -177,8 +178,13 @@ class Api:
             return None
         e = self.m.equipo(int(n)) if n else self.m.seleccionado
         g = self.m.geometria(e)
+        doc = dict(red.doc)
+        if "minado" in doc:
+            # los datos del caso se cambian por el ciclo ya calculado para este equipo
+            doc["minado"] = {**_plano(ciclo_de_minado(self.m, e, red, red.doc["minado"])),
+                             "taladros": red.doc["minado"]["taladros_por_guardia"]}
         return {
-            **red.doc,
+            **doc,
             "revision": {c.id: _plano(c) for c in g.curvas},
             "apto_curvas": g.apto_curvas,
             "radio_eje_min_m": round(g.radio_eje_min_mm / 1000, 3),
@@ -202,8 +208,10 @@ class Api:
             vels = [velocidad_en_pendiente(e, red.pendiente_en_sentido(x, y), True, p.velocidad_cargado)
                     for leg in red.doc["ruta"]["acarreo"]
                     for x, y in zip(leg["nodos"], leg["nodos"][1:])]
+            mina = (_plano(ciclo_de_minado(self.m, e, red, red.doc["minado"]))
+                    if "minado" in red.doc else None)
             filas.append({
-                **c, **{k: round(v, 2) for k, v in r.items()},
+                **c, **{k: round(v, 2) for k, v in r.items()}, "minado": mina,
                 "apto_curvas": all(x.cabe for x in rev),
                 "vel_min_cargado": round(min(vels), 2),
                 "pendiente_max": max(abs(t.get("pendiente_pct", 0.0)) for t in red.tramos),

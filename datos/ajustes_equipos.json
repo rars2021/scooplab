@@ -53,6 +53,14 @@
       "radio_giro_int_mm": 2720.0,
       "radio_giro_int_estimado": false,
       "fuente": "Ficha Sandvik Toro LH203, TS3-LH203-29-ENG-METRIC (2025): 71.5 kW, cuchara 1.5 m3, radios de giro R1 2720 / R2 4697 mm (p. 6)."
+    },
+    "9": {
+      "fabricante": "Sandvik (Artisan Vehicles)",
+      "peso_kg": 33315.0,
+      "potencia_kw": 480.0,
+      "potencia_hp": 643.0,
+      "autonomia": "Bateria LiFePO4 de 265 kWh, intercambiable (autocarga)",
+      "fuente": "Ficha Artisan A10, Artisan Vehicles (Sandvik), 2019: 9 900 x 2 200 x 2 160 mm, batalla 3 400 mm, 33 315 kg, 10 t, 480 kW continuos (600 pico), bateria 265 kWh. La ficha no da radios de giro (el exterior viene del Excel y el interior es estimado) y da cuchara de 4.3 m3 colmada; se conserva la de 4.0 m3 del Excel."
     }
   }
 }

@@ -1,0 +1,172 @@
+{
+  "origen": "Trazo de diseno, no topografia. Datos de perforacion, voladura, produccion y aire: tesis Deudor Yalico 2019, tajo 6675-2.",
+  "nodos": [
+    {
+      "id": "F",
+      "nombre": "Ventana del tajo 6675-2",
+      "tipo": "frente",
+      "x": -34.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    {
+      "id": "J",
+      "nombre": "Cruce al echadero",
+      "tipo": "interseccion",
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    {
+      "id": "M",
+      "nombre": "Camara de maniobra",
+      "tipo": "camara",
+      "x": 15.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    {
+      "id": "O",
+      "nombre": "Echadero principal",
+      "tipo": "echadero",
+      "x": 0.0,
+      "y": -20.0,
+      "z": 0.0
+    }
+  ],
+  "tramos": [
+    {
+      "id": "subnivel",
+      "nombre": "Subnivel de extraccion",
+      "tipo": "ventana",
+      "seccion": "labor_de_produccion_ventanas",
+      "perfil": "herradura",
+      "pendiente_pct": 0.0,
+      "nodos": [
+        "F",
+        "J",
+        "M"
+      ]
+    },
+    {
+      "id": "crucero",
+      "nombre": "Crucero al echadero",
+      "tipo": "crucero",
+      "seccion": "labor_de_produccion_ventanas",
+      "perfil": "boveda",
+      "pendiente_pct": 0.0,
+      "nodos": [
+        "J",
+        "O"
+      ]
+    }
+  ],
+  "curvas": [
+    {
+      "id": "giro",
+      "nombre": "Giro al echadero",
+      "nodo": "J",
+      "entre": [
+        "M",
+        "O"
+      ],
+      "radio_m": 6.0,
+      "sobreancho_mm": 400.0
+    }
+  ],
+  "ruta": {
+    "acarreo": [
+      {
+        "marcha": "reversa",
+        "nodos": [
+          "F",
+          "J",
+          "M"
+        ]
+      },
+      {
+        "marcha": "adelante",
+        "nodos": [
+          "M",
+          "J",
+          "O"
+        ]
+      }
+    ],
+    "retorno": [
+      {
+        "marcha": "reversa",
+        "nodos": [
+          "O",
+          "J",
+          "M"
+        ]
+      },
+      {
+        "marcha": "adelante",
+        "nodos": [
+          "M",
+          "J",
+          "F"
+        ]
+      }
+    ]
+  },
+  "inicio": [
+    "J",
+    "F"
+  ],
+  "vistas": [
+    {
+      "id": "general",
+      "nombre": "General"
+    },
+    {
+      "id": "frente",
+      "nombre": "Frente",
+      "nodo": "F",
+      "desde": "J",
+      "theta": -2.0,
+      "radio": 19
+    },
+    {
+      "id": "giro",
+      "nombre": "Giro",
+      "nodo": "J",
+      "desde": "M",
+      "theta": -1.1,
+      "radio": 22
+    },
+    {
+      "id": "echadero",
+      "nombre": "Echadero",
+      "nodo": "O",
+      "desde": "J",
+      "theta": 2.4,
+      "radio": 19
+    }
+  ],
+  "minado": {
+    "metodo": "Tajeo por subniveles con taladros largos, tajo 6675-2",
+    "taladros_por_guardia": 8,
+    "min_por_taladro": 45,
+    "longitud_taladro_m": 13.0,
+    "diametro_mm": 64,
+    "burden_m": 1.5,
+    "espaciamiento_m": 2.0,
+    "tcs_por_metro": 11.7,
+    "kg_anfo_por_taladro": 33.094,
+    "produccion_guardia_tcs": 250.0,
+    "personas": 6,
+    "hp_jumbo": 53.0,
+    "hp_camion": 197.5,
+    "min_carguio_voladura": 60.0,
+    "min_ventilacion": 30.0,
+    "min_desatado": 20.0,
+    "supuestos": [
+      "min_carguio_voladura",
+      "min_ventilacion",
+      "min_desatado"
+    ]
+  }
+}

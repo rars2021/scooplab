@@ -23,12 +23,12 @@ python main.py --web 8777
 
 | Carpeta | Contenido |
 |---|---|
-| `engine/` | Motor de cálculo: `modelo`, `red`, `ventilacion`, `payback`, `matriz`, `importar` |
+| `engine/` | Motor de cálculo: `modelo`, `red`, `minado`, `ventilacion`, `payback`, `matriz`, `importar` |
 | `datos/` | Equipos, parámetros, secciones, referencias, `red` y `casos/` (trazos de galerías), `ajustes_equipos` y `evidencia` |
 | `ui/fuentes/` | Capturas de las fichas de fabricante y de la tesis que se muestran en las ventanas |
-| `ui/` | Interfaz: `index.html`, `rockwedge.css`, `app.js`, `vistas.js`, `iconos.js` y el 3D en módulos ES: `render3d.js`, `red3d.js`, `camaras.js`, `minimapa.js` |
+| `ui/` | Interfaz: `index.html`, `rockwedge.css`, `app.js`, `vistas.js`, `iconos.js` y el 3D en módulos ES: `render3d.js`, `equipo3d.js`, `modelos.js`, `red3d.js`, `minado3d.js`, `camaras.js`, `minimapa.js` |
 | `ui/vendor/` | three.js r169, OrbitControls, three-mesh-bvh y three-bvh-csg, locales (sin internet) |
-| `tests/` | 21 pruebas de control contra el Excel, 14 de la red de galerías y 8 de casos y velocidad en pendiente |
+| `tests/` | 21 pruebas de control contra el Excel, 14 de la red de galerías, 8 de casos y velocidad en pendiente y 6 del ciclo de minado |
 
 ## Validación
 
@@ -55,17 +55,15 @@ Matriz · Payback · Parámetros · Opciones
 
 ## Render 3D
 
-Cada equipo se construye por código desde sus cotas reales del catálogo: no hay
-modelos externos. El túnel de sección se dibuja alrededor; si el equipo no cabe,
+Cada equipo se construye por código desde sus cotas del catálogo y los rasgos
+de su ficha (`ui/modelos.js`): posición real de ejes y articulación, tipo de
+cabina, baterías y colores de marca. La cuchara es hueca y se ve llenarse.
+No hay modelos externos. El túnel de sección se dibuja alrededor; si el equipo no cabe,
 las paredes se tiñen y se cotan las interferencias.
 
-Cada tipo de energía se distingue a la vista:
-
-| Energía | Señal |
-|---|---|
-| Diésel | bloque motor, escape con penacho animado, acento ámbar |
-| Eléctrico-cable | carrete trasero y traza acotada del radio de 120 m, acento celeste |
-| Batería | pack visible con barra de estado de carga, acento verde |
+Cada tipo de energía se distingue a la vista: los diésel llevan escape con
+penacho y rejilla de radiador; los de batería, el paquete de baterías sobre el
+bastidor trasero.
 
 ## Red de galerías
 
@@ -89,8 +87,12 @@ hasta cargar el de catálogo.
 ## Casos de simulación y velocidad
 
 En Simulación, el selector sobre el minimapa cambia de trazo (`datos/casos.json`):
-Rampa Fernando (cargado en bajada), profundización (cargado en subida a +13 %) y
-corte y relleno con ventana negativa de −17 % a la veta. Cada caso muestra su
+Rampa Fernando (cargado en bajada), profundización (cargado en subida a +13 %),
+corte y relleno con ventana negativa de −17 % a la veta y el **ciclo de minado
+completo** del tajo 6675-2 (perforación, carguío y voladura, ventilación, desatado
+y limpieza). En ese caso los datos de perforación, voladura, producción y aire son
+los de la tesis; la duración del carguío, de la ventilación y del desatado no está
+en la tesis y son supuestos editables en `datos/casos/ciclo_minado.json`. Cada caso muestra su
 recorrido, ciclo y rendimiento para el equipo elegido, junto al del Excel.
 
 La animación corre en tiempo real (1×, con 2×/4×/8×): la velocidad que se ve es
@@ -107,8 +109,9 @@ identificador y enlace al original) y, donde lo hay, un video. Ciclo, Costos,
 Ventilación y Geometría muestran la página de la tesis de donde sale el dato.
 Las fichas son propiedad de Sandvik, Epiroc/Atlas Copco y Caterpillar: se citan
 como fuente; revisa sus condiciones antes de redistribuirlas. Los radios de giro
-de ST3.5, LH307, ST7, R1300G y LH203 son los de esas fichas; los del ST7 Battery
-y el Artisan A10 siguen estimados.
+de ST3.5, LH307, ST7, R1300G y LH203 son los de esas fichas. El Artisan A10 tiene
+ficha (peso, potencia y batería salen de ella) pero no trae radios de giro; del
+ST7 Battery no hay ficha pública. En esos dos el radio interior sigue estimado.
 
 ## Cámaras
 

@@ -15,6 +15,7 @@
 import * as THREE from "three";
 import { Brush, Evaluator, ADDITION } from "three-bvh-csg";
 import { MeshBVH } from "three-mesh-bvh";
+import { cotasDe } from "./equipo3d.js";
 
 const RECTO = 1e-3;                       // rad: igual que engine/red.py
 const lerp = (a, b, u) => a + (b - a) * u;
@@ -281,6 +282,7 @@ function arcosDeSeccion(tr, s0, s1, secFn, cada, destino) {
 /* ------------------------------------------------ construccion ---------- */
 const ENSANCHE = 3.0;        // m en que el sobreancho entra y sale de la curva
 const D_PILA = 1.4, D_ECH = 2.4;   // m del fondo de la labor al centro de la pila / del echadero
+export const AVANCE = 1.5;         // m que el equipo entra en la pila al cargar
 
 /** Franja que barre el equipo en una curva de radio R (m). Igual que engine/red.py. */
 export function barridoM(eq, R) {
@@ -305,8 +307,9 @@ export function redDeCiclo(eq, sec, ctx) {
   const b = barridoM(eq, R);
   const pide = b.barrido + 2 * hol;
   const sob = Math.max(0, Math.ceil((pide - sec.ancho_mm / 1000 + 0.1) * 10) / 10);
-  const JM = R + 0.62 * L + 1.5, JO = R + 0.87 * L + 3.5;
-  const cola = 0.46 * L + 1, pf = D_PILA + 0.2 + 0.54 * L, pe = D_ECH - 0.3 + 0.54 * L;
+  const c = cotasDe(eq);
+  const cola = c.colaArt + 1, pf = D_PILA + AVANCE - 0.4 + c.puntaArt, pe = D_ECH - 0.3 + c.puntaArt;
+  const JM = R + cola + c.lf + 0.8, JO = R + c.lr + pe + 1.2;
   const meta = ctx.distancia_m || 80;
   const FJ = Math.max(L + 8, meta - (2 * JM + JO - 0.4292 * R - pf - pe - 2 * cola));
   const n = (id, nombre, tipo, x, y) => ({ id, nombre, tipo, x, y, z: 0 });
@@ -521,8 +524,12 @@ export function construirRed(red, eq, ctx, util) {
   const ech = red.doc.nodos.find(n => n.tipo === "echadero");
   let semilla = 7;
   const azar = () => { semilla = (semilla * 16807) % 2147483647; return semilla / 2147483647; };
+  const pila = new THREE.Group();
+  const pPila = new THREE.Vector3(), pEch = new THREE.Vector3();
+  grupo.add(pila);
   if (frente) {
     const { a, d } = haciaVecino(frente.id);
+    pPila.set(a.x + d[0] * D_PILA, a.z + 0.25, -(a.y + d[1] * D_PILA));
     for (let i = 0; i < 22; i++) {
       const r = 0.15 + azar() * 0.22;
       const roca2 = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0),
@@ -531,7 +538,7 @@ export function construirRed(red, eq, ctx, util) {
       roca2.position.set(a.x + d[0] * l - d[1] * u, a.z + r * 0.8, -(a.y + d[1] * l + d[0] * u));
       roca2.rotation.set(azar() * 3, azar() * 3, azar() * 3);
       roca2.castShadow = true;
-      grupo.add(roca2);
+      pila.add(roca2);
     }
     const et = etiqueta("frente de minado", p.warn, 1.3);
     et.position.set(a.x + d[0] * D_PILA, a.z + 4.4, -(a.y + d[1] * D_PILA));
@@ -540,6 +547,7 @@ export function construirRed(red, eq, ctx, util) {
   if (ech) {
     const { a, d } = haciaVecino(ech.id);
     const x = a.x + d[0] * D_ECH, y = a.y + d[1] * D_ECH;
+    pEch.set(x, a.z, -y);
     const boca = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, 0.1, 26),
       MAT.mate(claro() ? 0x4c535c : 0x0c0e10));
     boca.position.set(x, a.z + 0.04, -y);
@@ -649,7 +657,7 @@ export function construirRed(red, eq, ctx, util) {
   return {
     grupo, malla, cascara, lamparas, rotulos, centro, tam, red,
     pisoEn, apartar, mundoNodo, mundoPlanta, plantaDeMundo, planta,
-    D_PILA, D_ECH,
+    D_PILA, D_ECH, pila, pPila, pEch,
     /** corte: cara interior solida. transparente: toda la roca en vidrio, se ve a traves. */
     setEstilo(e) {
       const t = e === "transparente";
@@ -668,10 +676,11 @@ export function construirRed(red, eq, ctx, util) {
  * siempre en una recta comun a los dos ejes, asi la pose no salta.
  */
 export function tramosDeMarcha(red, eq, R) {
-  const L = eq.largo_mm / 1000;
-  const cola = 0.46 * L + 1.0;                 // articulacion con la cola a 1 m del fondo
-  const punta = 0.54 * L;                      // articulacion -> labio de la cuchara
-  const paradas = { frente: R.D_PILA + 0.2 + punta, echadero: R.D_ECH - 0.3 + punta };
+  const c = cotasDe(eq);
+  const cola = c.colaArt + 1.0;                // articulacion con la cola a 1 m del fondo
+  const punta = c.puntaArt;                    // articulacion -> labio de la cuchara
+  // en el frente para antes de la pila: al cargar avanza AVANCE y entra en ella
+  const paradas = { frente: R.D_PILA + AVANCE - 0.4 + punta, echadero: R.D_ECH - 0.3 + punta };
   const tipoDe = id => red.nodos[id].tipo;
   const parada = (id, largo, desdeInicio) => {
     const t = tipoDe(id);
@@ -693,8 +702,7 @@ export function tramosDeMarcha(red, eq, R) {
 
 /** Pose del equipo articulado con la articulacion en la estacion s. */
 export function poseEn(tr, s, eq) {
-  const L = eq.largo_mm / 1000;
-  const lf = 0.143 * L, lr = 0.322 * L;        // articulacion -> eje delantero / trasero
+  const { lf, lr } = cotasDe(eq);              // articulacion -> eje delantero / trasero
   const A = tr.en(s), F = tr.en(s + lf), T = tr.en(s - lr);
   const rf = Math.atan2(F.y - A.y, F.x - A.x), rt = Math.atan2(A.y - T.y, A.x - T.x);
   let dif = rf - rt;
