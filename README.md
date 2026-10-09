@@ -23,10 +23,11 @@ python main.py --web 8777
 
 | Carpeta | Contenido |
 |---|---|
-| `engine/` | Motor de cálculo: `modelo`, `ventilacion`, `payback`, `matriz`, `importar` |
-| `datos/` | Cuatro JSON: equipos, parámetros, secciones, referencias |
-| `ui/` | Interfaz: `index.html`, `rockwedge.css`, `app.js`, `vistas.js`, `render3d.js`, `iconos.js` |
-| `tests/` | 19 pruebas de control contra el Excel |
+| `engine/` | Motor de cálculo: `modelo`, `red`, `ventilacion`, `payback`, `matriz`, `importar` |
+| `datos/` | Cinco JSON: equipos, parámetros, secciones, referencias y `red` (trazo de galerías) |
+| `ui/` | Interfaz: `index.html`, `rockwedge.css`, `app.js`, `vistas.js`, `iconos.js` y el 3D en módulos ES: `render3d.js`, `red3d.js`, `camaras.js`, `minimapa.js` |
+| `ui/vendor/` | three.js r169, OrbitControls, three-mesh-bvh y three-bvh-csg, locales (sin internet) |
+| `tests/` | 19 pruebas de control contra el Excel y 13 de la red de galerías |
 
 ## Validación
 
@@ -64,6 +65,38 @@ Cada tipo de energía se distingue a la vista:
 | Diésel | bloque motor, escape con penacho animado, acento ámbar |
 | Eléctrico-cable | carrete trasero y traza acotada del radio de 120 m, acento celeste |
 | Batería | pack visible con barra de estado de carga, acento verde |
+
+## Red de galerías
+
+`datos/red.json` define nodos (x, y, z), tramos con su sección y pendiente, curvas
+con radio y sobreancho, y la ruta del scoop. **El trazo incluido es de diseño, no
+topografía**: Rampa Fernando 4×4 a −13 % con un zig-zag, intersección en Y hacia la
+rampa positiva 3×3.7 a +15 %, ventana 3×3 con cámara de maniobra y cámara lateral
+del echadero. Se edita a mano; el render y la revisión se actualizan solos.
+
+En modo **Simulación** las secciones se barren a lo largo del eje y se unen con
+operaciones booleanas; el equipo recorre la ruta articulando en las curvas y
+cambia de sentido con maniobras en la cámara y en la intersección.
+
+Revisión de curvas (`engine/red.py`, pestaña Geometría): el equipo gira si el radio
+de la curva es mayor que su radio de eje mínimo, y entra si
+`barrido + 2 × holgura ≤ sección + sobreancho`. Es adicional al Excel y no cambia
+el veredicto de sección. El Excel solo trae el radio de giro exterior; el interior
+(`radio_giro_int_mm` en `equipos.json`) está **estimado** como exterior − 1.21 × ancho
+hasta cargar el de catálogo.
+
+## Cámaras
+
+| Cámara | Uso |
+|---|---|
+| Órbita | girar con clic izquierdo, desplazar con clic derecho, zoom hacia el cursor |
+| Vuelo | WASD, Q/E para bajar y subir, Shift acelera, arrastrar para mirar |
+| Caminar | a pie dentro de la galería, con choque contra las paredes (solo Simulación) |
+| Seguir / Cabina | detrás del equipo o desde el asiento del operador |
+
+El teclado actúa cuando la escena tiene el foco (clic sobre ella). En Simulación
+hay además vistas guardadas, estilo corte / transparente y un minimapa en planta:
+un clic lleva la cámara a ese punto.
 
 ## Indicadores nuevos
 

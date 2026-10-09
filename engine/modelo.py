@@ -13,6 +13,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
 
+from .red import Red, RevisionCurva, radio_eje_min_mm
+
 def _rutas_datos() -> tuple[Path, Path]:
     """(datos_de_fabrica, datos_de_trabajo).
 
@@ -79,6 +81,8 @@ class Equipo:
     flexibilidad: float
     fuente: str
     render: dict = field(default_factory=dict)
+    radio_giro_int_mm: float | None = None       # el Excel no lo trae: ver engine/red.py
+    radio_giro_int_estimado: bool = False
 
     @property
     def es_diesel(self) -> bool:
@@ -143,6 +147,10 @@ class Geometria:
     indice_holgura: float            # holgura / ancho equipo
     apto_produccion: bool
     veredicto: str
+    # revision de curvas de la red (no esta en el Excel; no altera el veredicto)
+    radio_eje_min_mm: float = 0.0
+    curvas: list[RevisionCurva] = field(default_factory=list)
+    apto_curvas: bool = True
 
 
 @dataclass
@@ -194,7 +202,8 @@ class Resultado:
 class Modelo:
     def __init__(self, params: Parametros | None = None,
                  equipos: list[Equipo] | None = None,
-                 secciones: list[Seccion] | None = None):
+                 secciones: list[Seccion] | None = None,
+                 red: Red | None = None):
         if params is None:
             params = Parametros(_leer("params.json")["valores"])
         if equipos is None:
@@ -204,6 +213,7 @@ class Modelo:
         self.p = params
         self.equipos = equipos
         self.secciones = secciones
+        self.red = red if red is not None else Red.cargar(DATOS / "red.json", secciones)
 
     # ---------------------------------------------------------- utilidades
 
@@ -288,12 +298,30 @@ class Modelo:
             veredicto = "Solo transito por rampa principal"
         else:
             veredicto = "No apto"
+        curvas = self.red.revisar(e, p.holgura_minima_por_lado) if self.red else []
         return Geometria(
             ancho_req_mm=ancho_req, alto_req_mm=alto_req, encaje=encaje,
             holgura_critica_mm=holgura,
             indice_holgura=holgura / e.ancho_mm if e.ancho_mm else 0.0,
             apto_produccion=apto, veredicto=veredicto,
+            radio_eje_min_mm=radio_eje_min_mm(e),
+            curvas=curvas, apto_curvas=all(c.cabe for c in curvas),
         )
+
+    def ciclo_calculado(self, por_ruta: bool = False) -> float:
+        """Ciclo por tiempos y distancias, en minutos (Datos_Entrada).
+
+        por_ruta=True cambia las dos distancias del Excel por la longitud real
+        de la ruta en la red, maniobras incluidas. El ciclo en uso sigue siendo
+        `ciclo_de_la_tesis`: esto no toca el rendimiento.
+        """
+        p = self.p
+        ida, vuelta = p.distancia_ida_cargado, p.distancia_retorno_vacio
+        if por_ruta and self.red:
+            ida, vuelta = self.red.longitud_ruta("acarreo"), self.red.longitud_ruta("retorno")
+        return (p.tiempo_de_carga + (ida / 1000) / p.velocidad_cargado * 60
+                + p.tiempo_de_descarga + (vuelta / 1000) / p.velocidad_vacio * 60
+                + p.demoras_variables)
 
     def co2_kgh(self, e: Equipo) -> float:
         """Comparativo!L — cero en punto de uso para los electricos."""

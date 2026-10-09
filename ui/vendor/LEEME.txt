@@ -1,0 +1,7 @@
+Librerias de terceros, copiadas tal cual de npm para que la app funcione sin internet.
+Se resuelven con el <script type="importmap"> de index.html.
+
+  three.module.min.js        three@0.169.0          MIT  https://threejs.org
+  OrbitControls.js           three@0.169.0 (examples/jsm/controls)  MIT
+  three-mesh-bvh.module.js   three-mesh-bvh@0.8.3   MIT  https://github.com/gkjohnson/three-mesh-bvh
+  three-bvh-csg.module.js    three-bvh-csg@0.0.16   MIT  https://github.com/gkjohnson/three-bvh-csg

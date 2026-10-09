@@ -261,6 +261,21 @@ def _guardar(nombre: str, obj: Any) -> Path:
     return ruta
 
 
+CAMPOS_FUERA_DEL_EXCEL = ("radio_giro_int_mm", "radio_giro_int_estimado")
+
+
+def _conservar_radio_interior(equipos: list[dict]) -> None:
+    """El Excel solo trae el radio exterior: el interior se conserva del JSON."""
+    ruta = DATOS / "equipos.json"
+    if not ruta.exists():
+        return
+    previos = {e["n"]: e for e in json.loads(ruta.read_text(encoding="utf-8"))["equipos"]}
+    for eq in equipos:
+        for campo in CAMPOS_FUERA_DEL_EXCEL:
+            if campo in previos.get(eq["n"], {}):
+                eq[campo] = previos[eq["n"]][campo]
+
+
 def importar(xlsx: Path | None = None) -> dict[str, Path]:
     xlsx = Path(xlsx) if xlsx else XLSX_DEFECTO
     if not xlsx.exists():
@@ -270,6 +285,7 @@ def importar(xlsx: Path | None = None) -> dict[str, Path]:
     wv = openpyxl.load_workbook(xlsx, data_only=True)
 
     equipos = leer_equipos(wv)
+    _conservar_radio_interior(equipos)
     grupos = leer_params(wf, wv)
     secciones = leer_secciones(wv)
     referencias = leer_referencias(wv)

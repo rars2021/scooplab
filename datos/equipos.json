@@ -34,7 +34,9 @@
         "cable_m": 0,
         "bateria": false
       },
-      "consumo_unidad": "gal/h"
+      "consumo_unidad": "gal/h",
+      "radio_giro_int_mm": 3759.0,
+      "radio_giro_int_estimado": true
     },
     {
       "n": 2,
@@ -68,7 +70,9 @@
         "cable_m": 0,
         "bateria": false
       },
-      "consumo_unidad": "gal/h"
+      "consumo_unidad": "gal/h",
+      "radio_giro_int_mm": 3266.0,
+      "radio_giro_int_estimado": true
     },
     {
       "n": 3,
@@ -102,7 +106,9 @@
         "cable_m": 0,
         "bateria": false
       },
-      "consumo_unidad": "gal/h"
+      "consumo_unidad": "gal/h",
+      "radio_giro_int_mm": 3216.0,
+      "radio_giro_int_estimado": true
     },
     {
       "n": 4,
@@ -136,7 +142,9 @@
         "cable_m": 0,
         "bateria": false
       },
-      "consumo_unidad": "gal/h"
+      "consumo_unidad": "gal/h",
+      "radio_giro_int_mm": 3195.0,
+      "radio_giro_int_estimado": true
     },
     {
       "n": 5,
@@ -170,7 +178,9 @@
         "cable_m": 0,
         "bateria": false
       },
-      "consumo_unidad": "gal/h"
+      "consumo_unidad": "gal/h",
+      "radio_giro_int_mm": 2785.0,
+      "radio_giro_int_estimado": true
     },
     {
       "n": 6,
@@ -204,7 +214,9 @@
         "cable_m": 120,
         "bateria": false
       },
-      "consumo_unidad": "kWh/h"
+      "consumo_unidad": "kWh/h",
+      "radio_giro_int_mm": 2882.0,
+      "radio_giro_int_estimado": true
     },
     {
       "n": 7,
@@ -238,7 +250,9 @@
         "cable_m": 0,
         "bateria": true
       },
-      "consumo_unidad": "kWh/h"
+      "consumo_unidad": "kWh/h",
+      "radio_giro_int_mm": 2882.0,
+      "radio_giro_int_estimado": true
     },
     {
       "n": 8,
@@ -272,7 +286,9 @@
         "cable_m": 0,
         "bateria": true
       },
-      "consumo_unidad": "kWh/h"
+      "consumo_unidad": "kWh/h",
+      "radio_giro_int_mm": 3336.0,
+      "radio_giro_int_estimado": true
     },
     {
       "n": 9,
@@ -306,7 +322,9 @@
         "cable_m": 0,
         "bateria": true
       },
-      "consumo_unidad": "kWh/h"
+      "consumo_unidad": "kWh/h",
+      "radio_giro_int_mm": 3838.0,
+      "radio_giro_int_estimado": true
     }
   ]
 }

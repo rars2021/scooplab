@@ -105,17 +105,22 @@ class Api:
         cap_ref = self.m.rend_efectivo(ref) * self.m.horas_dia
 
         # tiempos de cada fase, en minutos del modelo
-        t_acarreo = (p.distancia_ida_cargado / 1000) / p.velocidad_cargado * 60
-        t_retorno = (p.distancia_retorno_vacio / 1000) / p.velocidad_vacio * 60
+        d_ida, d_ret = p.distancia_ida_cargado, p.distancia_retorno_vacio
+        if self.m.red and p.get("usar_longitud_de_ruta", 0):
+            d_ida = self.m.red.longitud_ruta("acarreo")
+            d_ret = self.m.red.longitud_ruta("retorno")
+        t_acarreo = (d_ida / 1000) / p.velocidad_cargado * 60
+        t_retorno = (d_ret / 1000) / p.velocidad_vacio * 60
 
         return {
+            "red": self.red(e.n),
             "holguraLado": p.holgura_minima_por_lado,
             "holguraTecho": p.holgura_minima_al_techo,
             "t_carga": p.tiempo_de_carga,
             "t_acarreo": round(t_acarreo, 3),
             "t_descarga": p.tiempo_de_descarga,
             "t_retorno": round(t_retorno, 3),
-            "distancia_m": p.distancia_ida_cargado,
+            "distancia_m": d_ida,
             "cap_cuchara": round(self.m.capacidad_cuchara(e), 3),
             "meta": meta,
             "n_sel": self.m.n_equipos(e, meta),
@@ -158,6 +163,25 @@ class Api:
             cands = [e for e in self.m.equipos if e.es_diesel]
         return max(cands, key=lambda e: self.m.rend_efectivo(e))
 
+    # ------------------------------------------------------------ red de galerias
+
+    def red(self, n: int | None = None) -> dict | None:
+        """Trazo de la red y revision de curvas para un equipo."""
+        red = self.m.red
+        if red is None:
+            return None
+        e = self.m.equipo(int(n)) if n else self.m.seleccionado
+        g = self.m.geometria(e)
+        return {
+            **red.doc,
+            "revision": {c.id: _plano(c) for c in g.curvas},
+            "apto_curvas": g.apto_curvas,
+            "radio_eje_min_m": round(g.radio_eje_min_mm / 1000, 3),
+            "radio_int_estimado": bool(e.radio_giro_int_estimado or not e.radio_giro_int_mm),
+            "longitud_acarreo_m": round(red.longitud_ruta("acarreo"), 1),
+            "longitud_retorno_m": round(red.longitud_ruta("retorno"), 1),
+        }
+
     # ------------------------------------------------------------ geometria
 
     def geometria(self) -> dict:
@@ -175,8 +199,16 @@ class Api:
                 "encaje": g.encaje, "holgura": round(g.holgura_critica_mm, 0),
                 "indice_holgura": round(g.indice_holgura, 4),
                 "apto": g.apto_produccion, "veredicto": g.veredicto,
+                "apto_curvas": g.apto_curvas,
+                "curvas": _plano(g.curvas),
+                "radio_eje_min": round(g.radio_eje_min_mm, 0),
+                "radio_giro": r.equipo.radio_giro_mm,
+                "radio_int": round(g.radio_eje_min_mm - r.equipo.ancho_mm / 2, 0),
+                "radio_int_estimado": bool(r.equipo.radio_giro_int_estimado
+                                           or not r.equipo.radio_giro_int_mm),
             })
         return {"secciones": secciones, "filas": filas,
+                "hay_red": self.m.red is not None,
                 "holgura_lado": self.m.p.holgura_minima_por_lado,
                 "holgura_techo": self.m.p.holgura_minima_al_techo}
 
@@ -197,10 +229,13 @@ class Api:
             "cap_anio": round(r.capacidad_diaria_tcs * p.dias_operativos_por_ano, 0),
             "n_equipos": r.n_equipos,
             "ciclo_min": p.ciclo_de_la_tesis,
-            "ciclo_calculado": round(
-                p.tiempo_de_carga + (p.distancia_ida_cargado / 1000) / p.velocidad_cargado * 60
-                + p.tiempo_de_descarga + (p.distancia_retorno_vacio / 1000) / p.velocidad_vacio * 60
-                + p.demoras_variables, 3),
+            "ciclo_calculado": round(self.m.ciclo_calculado(), 3),
+            "ciclo_ruta": round(self.m.ciclo_calculado(por_ruta=True), 3) if self.m.red else None,
+            "distancia_excel": [p.distancia_ida_cargado, p.distancia_retorno_vacio],
+            "distancia_ruta": ([round(self.m.red.longitud_ruta("acarreo"), 1),
+                                round(self.m.red.longitud_ruta("retorno"), 1)]
+                               if self.m.red else None),
+            "usar_ruta": bool(p.get("usar_longitud_de_ruta", 0)),
             "dm": p.disponibilidad_mecanica, "ue": p.utilizacion_efectiva,
             "meta": p.produccion_objetivo,
             "kpis": _plano(r.kpis),
@@ -395,8 +430,13 @@ def servir_web(puerto: int = 8777) -> None:
             except Exception as e:  # noqa: BLE001
                 return self._json({"error": str(e)}, 500)
 
-    socketserver.TCPServer.allow_reuse_address = True
-    with socketserver.TCPServer(("127.0.0.1", puerto), Handler) as srv:
+    # con hilos: el navegador abre varias conexiones para los modulos ES y una
+    # sola en espera bloquearia a las demas
+    class Servidor(socketserver.ThreadingTCPServer):
+        allow_reuse_address = True
+        daemon_threads = True
+
+    with Servidor(("127.0.0.1", puerto), Handler) as srv:
         print(f"ScoopLab (modo web) -> http://127.0.0.1:{puerto}/index.html")
         srv.serve_forever()
 
@@ -414,7 +454,8 @@ def main() -> None:
         js_api=api, width=1440, height=900, min_size=(1024, 680),
         background_color="#15171a",
     )
-    webview.start(debug="--debug" in sys.argv)
+    # los modulos ES no cargan desde file://: pywebview sirve ui/ por su HTTP local
+    webview.start(debug="--debug" in sys.argv, http_server=True)
 
 
 if __name__ == "__main__":

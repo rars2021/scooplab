@@ -1,0 +1,270 @@
+{
+  "origen": "Trazo propuesto para el estudio: NO es topografia de la mina. Secciones y pendientes segun Deudor Yalico 2019 (PDF p. 90-92); coordenadas, radios y sobreanchos son de diseno y se editan aqui.",
+  "unidades": "x este, y norte, z cota: metros. Pendiente en % en el sentido de la lista de nodos.",
+  "nodos": [
+    {
+      "id": "A",
+      "nombre": "Rampa Fernando, hacia superficie",
+      "tipo": "extremo",
+      "x": -12.856,
+      "y": -10.679,
+      "z": 2.6
+    },
+    {
+      "id": "J2",
+      "nombre": "Interseccion en Y",
+      "tipo": "interseccion",
+      "x": 0.0,
+      "y": -26.0,
+      "z": 0.0
+    },
+    {
+      "id": "C1",
+      "nombre": "Zig-zag, entrada",
+      "tipo": "curva",
+      "x": 12.856,
+      "y": -41.321,
+      "z": -2.377
+    },
+    {
+      "id": "C2",
+      "nombre": "Zig-zag, salida",
+      "tipo": "curva",
+      "x": 0.599,
+      "y": -51.605,
+      "z": -4.01
+    },
+    {
+      "id": "K",
+      "nombre": "Acceso a la camara del echadero",
+      "tipo": "interseccion",
+      "x": -9.686,
+      "y": -39.349,
+      "z": -5.867
+    },
+    {
+      "id": "E",
+      "nombre": "Rampa Fernando, hacia profundizacion",
+      "tipo": "extremo",
+      "x": -18.685,
+      "y": -28.624,
+      "z": -7.687
+    },
+    {
+      "id": "O",
+      "nombre": "Echadero al pique",
+      "tipo": "echadero",
+      "x": -23.475,
+      "y": -50.918,
+      "z": -5.867
+    },
+    {
+      "id": "J1",
+      "nombre": "Interseccion ventana - rampa",
+      "tipo": "interseccion",
+      "x": 0.0,
+      "y": 0.0,
+      "z": 3.9
+    },
+    {
+      "id": "F",
+      "nombre": "Frente del tajo",
+      "tipo": "frente",
+      "x": -18.0,
+      "y": 0.0,
+      "z": 3.9
+    },
+    {
+      "id": "M",
+      "nombre": "Camara de maniobra",
+      "tipo": "camara",
+      "x": 14.0,
+      "y": 0.0,
+      "z": 3.9
+    }
+  ],
+  "tramos": [
+    {
+      "id": "rampa_fernando",
+      "nombre": "Rampa Fernando",
+      "tipo": "rampa",
+      "seccion": "rampa_fernando",
+      "perfil": "boveda",
+      "pendiente_pct": -13.0,
+      "nodos": [
+        "A",
+        "J2",
+        "C1",
+        "C2",
+        "K",
+        "E"
+      ]
+    },
+    {
+      "id": "rampa_positiva",
+      "nombre": "Rampa positiva al tajo",
+      "tipo": "rampa",
+      "seccion": "rampas_positivas_a_tajos",
+      "perfil": "boveda",
+      "pendiente_pct": 15.0,
+      "nodos": [
+        "J2",
+        "J1"
+      ]
+    },
+    {
+      "id": "ventana",
+      "nombre": "Ventana de produccion",
+      "tipo": "ventana",
+      "seccion": "labor_de_produccion_ventanas",
+      "perfil": "herradura",
+      "pendiente_pct": 0.0,
+      "nodos": [
+        "F",
+        "J1",
+        "M"
+      ]
+    },
+    {
+      "id": "camara_echadero",
+      "nombre": "Camara del echadero",
+      "tipo": "camara",
+      "seccion": "rampa_fernando",
+      "perfil": "boveda",
+      "pendiente_pct": 0.0,
+      "nodos": [
+        "K",
+        "O"
+      ]
+    }
+  ],
+  "curvas": [
+    {
+      "id": "zigzag_1",
+      "nombre": "Zig-zag, primer cuarto",
+      "nodo": "C1",
+      "entre": [
+        "J2",
+        "C2"
+      ],
+      "radio_m": 8.0,
+      "sobreancho_mm": 0.0
+    },
+    {
+      "id": "zigzag_2",
+      "nombre": "Zig-zag, segundo cuarto",
+      "nodo": "C2",
+      "entre": [
+        "C1",
+        "K"
+      ],
+      "radio_m": 8.0,
+      "sobreancho_mm": 0.0
+    },
+    {
+      "id": "y_rampa",
+      "nombre": "Y rampa positiva - Fernando",
+      "nodo": "J2",
+      "entre": [
+        "J1",
+        "C1"
+      ],
+      "radio_m": 10.0,
+      "sobreancho_mm": 300.0
+    },
+    {
+      "id": "t_maniobra",
+      "nombre": "Salida de la camara de maniobra",
+      "nodo": "J1",
+      "entre": [
+        "M",
+        "J2"
+      ],
+      "radio_m": 6.0,
+      "sobreancho_mm": 200.0
+    },
+    {
+      "id": "t_frente",
+      "nombre": "Giro de la rampa al frente",
+      "nodo": "J1",
+      "entre": [
+        "J2",
+        "F"
+      ],
+      "radio_m": 6.0,
+      "sobreancho_mm": 200.0
+    },
+    {
+      "id": "echadero_entrada",
+      "nombre": "Entrada a la camara del echadero",
+      "nodo": "K",
+      "entre": [
+        "C2",
+        "O"
+      ],
+      "radio_m": 6.0,
+      "sobreancho_mm": 0.0
+    },
+    {
+      "id": "echadero_salida",
+      "nombre": "Salida en reversa del echadero",
+      "nodo": "K",
+      "entre": [
+        "O",
+        "E"
+      ],
+      "radio_m": 6.0,
+      "sobreancho_mm": 0.0
+    }
+  ],
+  "ruta": {
+    "acarreo": [
+      {
+        "marcha": "reversa",
+        "nodos": [
+          "F",
+          "J1",
+          "M"
+        ],
+        "nota": "sale del frente en reversa hasta la camara de maniobra"
+      },
+      {
+        "marcha": "adelante",
+        "nodos": [
+          "M",
+          "J1",
+          "J2",
+          "C1",
+          "C2",
+          "K",
+          "O"
+        ],
+        "nota": "baja por la rampa positiva y la Fernando hasta el echadero"
+      }
+    ],
+    "retorno": [
+      {
+        "marcha": "reversa",
+        "nodos": [
+          "O",
+          "K",
+          "E"
+        ],
+        "nota": "sale de la camara en reversa, cola hacia abajo"
+      },
+      {
+        "marcha": "adelante",
+        "nodos": [
+          "E",
+          "K",
+          "C2",
+          "C1",
+          "J2",
+          "J1",
+          "F"
+        ],
+        "nota": "sube de frente hasta el tajo"
+      }
+    ]
+  }
+}

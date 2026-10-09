@@ -20,6 +20,26 @@
 <!-- selector de equipo -->
 <aside id="selector"></aside>
 
+<!-- camara de la escena 3D -->
+<div id="camaras">
+  <span class="segmentado" id="segCam">
+    <button data-cam="orbita" class="sel" data-tip="Girar: clic izq. · Desplazar: clic der. · Zoom: rueda, hacia el cursor">Orbita</button>
+    <button data-cam="vuelo" data-tip="WASD mover · Q/E bajar y subir · Shift rapido · arrastrar para mirar">Vuelo</button>
+    <button data-cam="caminar" data-tip="Recorrer la galeria a pie: WASD y arrastrar para mirar">Caminar</button>
+    <button data-cam="seguir" data-tip="Camara detras del equipo">Seguir</button>
+    <button data-cam="cabina" data-tip="Vista del operador">Cabina</button>
+  </span>
+  <span class="segmentado" id="segVistas" hidden></span>
+  <span class="segmentado" id="segEstilo" hidden>
+    <button data-estilo="corte" class="sel" data-tip="Solo la cara interior: la galeria se ve en corte desde afuera">Corte</button>
+    <button data-estilo="transparente" data-tip="Agrega el contorno exterior en transparencia">Transparente</button>
+  </span>
+  <div id="ayudaCam"></div>
+</div>
+
+<!-- planta de la red: un clic lleva la camara a ese punto -->
+<canvas id="minimapa" hidden data-tip="Clic para ir a ese punto"></canvas>
+
 <!-- modo de la escena 3D -->
 <div id="modos">
   <span class="segmentado" id="segModo">
@@ -61,9 +81,16 @@
   </div>
 </nav>
 
+<!-- three.js y complementos como modulos ES, servidos desde ui/vendor (sin internet) -->
+<script type="importmap">
+{ "imports": {
+    "three": "./vendor/three.module.min.js",
+    "three-mesh-bvh": "./vendor/three-mesh-bvh.module.js",
+    "three-bvh-csg": "./vendor/three-bvh-csg.module.js"
+} }
+</script>
 <script src="iconos.js"></script>
-<script src="vendor/three.min.js"></script>
-<script src="render3d.js"></script>
+<script type="module" src="render3d.js" onerror="window.dispatchEvent(new Event('render3d-listo'))"></script>
 <script src="vistas.js"></script>
 <script src="app.js"></script>
 </body>

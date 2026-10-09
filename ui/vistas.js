@@ -223,8 +223,37 @@ VISTAS.geometria = async () => {
       <td class="num">${fmt.e(r.ancho_mm)}</td><td class="num">${fmt.e(r.ancho_req)}</td>
       ${celdas}
       <td class="num ${eh}">${fmt.e(r.holgura)}</td>
+      ${g.hay_red ? `<td class="num">${r.apto_curvas ? '<span class="ok">gira</span>'
+        : `<span class="bad">${r.curvas.filter(c => !c.cabe).length} no</span>`}</td>` : ""}
       <td style="font-size:11px">${fmt.esc(r.veredicto)}</td></tr>`;
   }).join("");
+
+  // curvas de la red para el equipo seleccionado
+  const sel = g.filas.find(r => r.n === D.sel);
+  const curvas = !g.hay_red || !sel ? "" : `
+    <div class="cabeza" style="margin-top:14px"><h2>Curvas de la red</h2>
+      <span class="sub">${fmt.esc(sel.modelo)} · giro exterior ${fmt.e(sel.radio_giro)} mm ·
+        interior ${fmt.e(sel.radio_int)} mm${sel.radio_int_estimado ? " (estimado)" : ""} ·
+        radio de eje minimo ${fmt.e(sel.radio_eje_min)} mm</span></div>
+    <table class="tbl"><thead><tr>
+      <th>Curva</th><th class="num">Radio</th><th class="num">Giro</th>
+      <th class="num">Barrido</th><th class="num">Requerido</th>
+      <th class="num">Disponible</th><th class="num">Margen</th><th></th>
+    </tr></thead><tbody>${sel.curvas.map(c => `<tr>
+      <td>${fmt.esc(c.nombre)}</td>
+      <td class="num">${fmt.n(c.radio_m, 1)} m</td><td class="num">${fmt.e(c.angulo_deg)}°</td>
+      <td class="num">${fmt.e(c.ancho_barrido_mm)}</td><td class="num">${fmt.e(c.ancho_req_mm)}</td>
+      <td class="num">${fmt.e(c.ancho_disp_mm)}</td>
+      <td class="num ${c.cabe ? "ok" : "bad"}">${fmt.e(c.margen_mm)}</td>
+      <td>${c.cabe ? '<span class="ok">entra</span>'
+        : `<span class="bad">${c.gira ? "no entra" : "no gira"}</span>`}</td></tr>`).join("")}
+    </tbody></table>
+    <div class="nota" style="margin-top:10px">En curva el equipo articulado barre mas que su ancho:
+      <b>requerido = barrido + 2 × holgura</b>; <b>disponible = seccion + sobreancho</b> de la curva.
+      Esta revision es adicional al Excel y no cambia el veredicto de seccion. El trazo de
+      <span class="mono">datos/red.json</span> es de diseno, no topografia${sel.radio_int_estimado
+        ? "; el radio interior es una estimacion hasta cargar el de catalogo" : ""}.
+      Las curvas se ven en el render, modo <b>Simulacion</b>.</div>`;
 
   return `<div class="lectura">
       <span>holgura por lado <b>${fmt.e(g.holgura_lado)} mm</b></span><span class="s">·</span>
@@ -238,8 +267,8 @@ VISTAS.geometria = async () => {
       verlo en el render con el tunel de seccion.</div>
     <table class="tbl"><thead><tr>
       <th>ID</th><th>Modelo</th><th class="num">Ancho</th><th class="num">Requerido</th>
-      ${cab}<th class="num">Holgura</th><th>Veredicto</th>
-    </tr></thead><tbody>${filas}</tbody></table>`;
+      ${cab}<th class="num">Holgura</th>${g.hay_red ? '<th class="num">Curvas</th>' : ""}<th>Veredicto</th>
+    </tr></thead><tbody>${filas}</tbody></table>${curvas}`;
 };
 VISTAS.conectar.geometria = c => {
   c.querySelectorAll("tr.fila").forEach(t =>
@@ -274,6 +303,16 @@ VISTAS.ciclo = async () => {
           <div class="row"><span class="k">Disponibilidad mecanica</span><span class="v">${fmt.pct(c.dm, 0)}</span></div>
           <div class="row"><span class="k">Utilizacion efectiva</span><span class="v">${fmt.pct(c.ue, 0)}</span></div>
           <div class="row"><span class="k">OEE</span><span class="v">${fmt.pct(c.kpis.oee)}</span></div>
+          ${c.distancia_ruta ? `
+          <div class="row"><span class="k">Distancia del Excel (ida / retorno)</span>
+            <span class="v">${fmt.e(c.distancia_excel[0])} / ${fmt.e(c.distancia_excel[1])} m</span></div>
+          <div class="row"><span class="k">Ruta en la red, con maniobras</span>
+            <span class="v">${fmt.n(c.distancia_ruta[0], 0)} / ${fmt.n(c.distancia_ruta[1], 0)} m</span></div>
+          <div class="row"><span class="k">Ciclo calculado con la ruta</span>
+            <span class="v">${fmt.n(c.ciclo_ruta, 2)} min</span></div>
+          <div class="row"><span class="k"><label style="cursor:pointer">
+            <input type="checkbox" id="usarRuta" ${c.usar_ruta ? "checked" : ""}>
+            Animar con la longitud de la ruta</label></span><span class="v"></span></div>` : ""}
         </div>
         <div class="formula" style="margin-top:9px">
 R<span class="op">efectivo</span> <span class="op">=</span> C × (60 ÷ t<span class="op">ciclo</span>) × DM × UE<br>
@@ -285,6 +324,14 @@ R<span class="op">efectivo</span> <span class="op">=</span> C × (60 ÷ t<span c
       medidos en tres horas efectivas: es un rendimiento <b>nominal</b>, no el
       promedio de la guardia. Compararlo con el efectivo sobrestima la capacidad
       instalada en torno a un 40 %.</div>`;
+};
+
+VISTAS.conectar.ciclo = c => {
+  const chk = c.querySelector("#usarRuta");
+  if (chk) chk.addEventListener("change", async () => {
+    await api("set_param", "usar_longitud_de_ruta", chk.checked ? 1 : 0);
+    refrescarEscena();
+  });
 };
 
 /* ============================== 5. COSTOS ============================= */

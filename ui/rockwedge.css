@@ -105,6 +105,23 @@ button{font-family:inherit;color:inherit;cursor:pointer}
 .rp-lectura b{color:var(--ink-strong);font-weight:600}
 .rp-lectura .f{color:var(--accent)}
 
+/* ---------------- CAMARA, VISTAS Y MINIMAPA ---------------- */
+#camaras{position:fixed;left:50%;transform:translateX(-50%);top:12px;z-index:28;
+  display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;
+  max-width:calc(100vw - 600px)}
+#camaras .segmentado{pointer-events:auto;background:var(--panel);box-shadow:var(--sombra);flex-wrap:wrap;justify-content:center}
+#camaras .segmentado[hidden]{display:none}
+#camaras .segmentado button:disabled{opacity:.35;cursor:default;background:transparent;color:var(--muted)}
+#segVistas button,#segEstilo button{padding:2px 9px;font-size:10.5px}
+#ayudaCam{font-family:var(--mono);font-size:10.5px;color:var(--muted);background:var(--panel);
+  border:1px solid var(--rule);padding:3px 10px;opacity:0;transition:opacity .2s;text-align:center}
+#ayudaCam.on{opacity:1}
+#ayudaCam b{color:var(--ink-strong);font-weight:600}
+#escena:focus-visible{outline:none}
+#minimapa{position:fixed;left:12px;bottom:58px;z-index:28;width:230px;height:230px;
+  background:var(--panel);border:1px solid var(--rule);box-shadow:var(--sombra);cursor:crosshair}
+#minimapa[hidden]{display:none}
+
 /* ---------------- VENTANAS ---------------- */
 .win{position:fixed;z-index:20;background:var(--panel);border:1px solid var(--rule);
   box-shadow:var(--sombra);display:flex;flex-direction:column;overflow:hidden;min-width:340px}

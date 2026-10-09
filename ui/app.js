@@ -380,8 +380,10 @@ async function iniciar() {
   pintarHUD();
   reloj(); setInterval(reloj, 15000);
 
+  await render3dListo();
   if (window.Render3D) {
     Render3D.iniciar(document.getElementById("escena"));
+    conectarCamaras();
     await refrescarEscena();
   } else {
     document.getElementById("escena").hidden = true;
@@ -429,6 +431,67 @@ async function iniciar() {
     aplicarUnidad(D.unidad === "TCS" ? "t" : "TCS"));
 
   abrir("flota");
+}
+
+/* ------------------------- camaras, vistas y minimapa -------------------- */
+/** render3d.js es un modulo: se ejecuta despues de este script. */
+function render3dListo() {
+  if (window.Render3D) return Promise.resolve();
+  return new Promise(ok => {
+    addEventListener("render3d-listo", ok, { once: true });
+    setTimeout(ok, 6000);
+  });
+}
+
+const AYUDA_CAM = {
+  vuelo: "<b>WASD</b> mover · <b>Q/E</b> bajar y subir · <b>Shift</b> rapido · arrastrar para mirar",
+  caminar: "<b>WASD</b> caminar · <b>Shift</b> correr · arrastrar para mirar · las paredes detienen",
+  seguir: "camara detras del equipo",
+  cabina: "vista del operador",
+};
+
+function conectarCamaras() {
+  const segCam = document.getElementById("segCam");
+  const segVistas = document.getElementById("segVistas");
+  const segEstilo = document.getElementById("segEstilo");
+  const ayuda = document.getElementById("ayudaCam");
+  const mapa = document.getElementById("minimapa");
+  Render3D.conectarMinimapa(mapa);
+
+  const marcarCam = cam => {
+    segCam.querySelectorAll("button").forEach(b => b.classList.toggle("sel", b.dataset.cam === cam));
+    ayuda.innerHTML = AYUDA_CAM[cam] || "";
+    ayuda.classList.toggle("on", !!AYUDA_CAM[cam]);
+  };
+
+  segCam.addEventListener("click", e => {
+    const b = e.target.closest("[data-cam]");
+    if (!b || b.disabled) return;
+    Render3D.setCamara(b.dataset.cam);
+    if (b.dataset.cam !== "orbita") mostrarEscena();
+  });
+  segVistas.addEventListener("click", e => {
+    const b = e.target.closest("[data-vista]");
+    if (b) Render3D.irAVista(b.dataset.vista);
+  });
+  segEstilo.addEventListener("click", e => {
+    const b = e.target.closest("[data-estilo]");
+    if (!b) return;
+    segEstilo.querySelectorAll("button").forEach(x => x.classList.toggle("sel", x === b));
+    Render3D.setEstilo(b.dataset.estilo);
+  });
+
+  Render3D.alCambiarCamara(marcarCam);
+  // cada modo de escena habilita las camaras que tienen sentido en el
+  Render3D.alCambiarEscena(est => {
+    segCam.querySelector('[data-cam="caminar"]').disabled = !est.red;
+    segCam.querySelector('[data-cam="seguir"]').disabled = !est.maquina;
+    segCam.querySelector('[data-cam="cabina"]').disabled = !est.maquina;
+    segVistas.hidden = segEstilo.hidden = mapa.hidden = !est.red;
+    segVistas.innerHTML = est.vistas.map(v =>
+      `<button data-vista="${v.id}">${fmt.esc(v.nombre)}</button>`).join("");
+    marcarCam(est.camara);
+  });
 }
 
 /* ------------------------- reproductor de la simulacion ------------------ */
