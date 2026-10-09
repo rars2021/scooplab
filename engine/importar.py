@@ -276,6 +276,27 @@ def _conservar_radio_interior(equipos: list[dict]) -> None:
                 eq[campo] = previos[eq["n"]][campo]
 
 
+def aplicar_ajustes(equipos: list[dict]) -> list[dict]:
+    """Quita los equipos sin ficha de fabricante y corrige los identificados.
+
+    Lee datos/ajustes_equipos.json. Los `n` no se renumeran: siguen siendo la
+    columna N de la hoja Equipos del Excel.
+    """
+    ruta = DATOS / "ajustes_equipos.json"
+    if not ruta.exists():
+        return equipos
+    aj = json.loads(ruta.read_text(encoding="utf-8"))
+    fuera = {x["n"] for x in aj.get("excluir", [])}
+    cambios = aj.get("reemplazar", {})
+    salida = []
+    for eq in equipos:
+        if eq["n"] in fuera:
+            continue
+        eq.update(cambios.get(str(eq["n"]), {}))
+        salida.append(eq)
+    return salida
+
+
 def importar(xlsx: Path | None = None) -> dict[str, Path]:
     xlsx = Path(xlsx) if xlsx else XLSX_DEFECTO
     if not xlsx.exists():
@@ -286,6 +307,7 @@ def importar(xlsx: Path | None = None) -> dict[str, Path]:
 
     equipos = leer_equipos(wv)
     _conservar_radio_interior(equipos)
+    equipos = aplicar_ajustes(equipos)
     grupos = leer_params(wf, wv)
     secciones = leer_secciones(wv)
     referencias = leer_referencias(wv)

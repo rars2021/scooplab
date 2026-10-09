@@ -15,9 +15,9 @@
           "unidad": "columna N de la hoja Equipos",
           "tipo": "decimal",
           "min": 0.0,
-          "max": 6,
-          "paso": 0.01,
-          "nota": "1 tesis, 2 LH307, 3 ST7, 4 R1300G, 5 LH203, 6 elect. cable, 7 STB bateria, 8 ST7 Battery, 9 Artisan A10"
+          "max": 9,
+          "paso": 1,
+          "nota": "1 ST3.5 (tesis), 2 LH307, 3 ST7, 4 R1300G, 5 LH203, 8 ST7 Battery, 9 Artisan A10"
         },
         {
           "clave": "modelo_seleccionado",

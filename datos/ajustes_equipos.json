@@ -1,0 +1,34 @@
+{
+  "nota": "Ajustes al catalogo que el Excel no trae. Se aplican en cada importacion (engine/importar.py): solo se evaluan equipos con ficha tecnica de fabricante.",
+  "excluir": [
+    {
+      "n": 6,
+      "motivo": "Scoop electrico 2.2 yd3 con cable de Orcopampa: ninguna fuente publica (ProActivo, Rumbo Minero, Tecnologia Minera, tesis UNDAC) da marca ni modelo; sus cotas eran estimadas."
+    },
+    {
+      "n": 7,
+      "motivo": "Mismo scoop con el Sistema de Traslado de Bateria (Buenaventura + BEV del Peru): sin marca, modelo ni ficha."
+    }
+  ],
+  "reemplazar": {
+    "1": {
+      "modelo": "Atlas Copco Scooptram ST3.5",
+      "fabricante": "Atlas Copco (hoy Epiroc)",
+      "situacion": "Equipo de la tesis 2019 (modelo inferido)",
+      "carga_util_kg": 6000.0,
+      "ancho_mm": 1956.0,
+      "alto_mm": 2250.0,
+      "largo_mm": 8460.0,
+      "potencia_kw": 136.0,
+      "potencia_hp": 182.0,
+      "peso_kg": 17100.0,
+      "fuerza_arranque_kg": 9300.0,
+      "radio_giro_mm": 5470.0,
+      "radio_giro_int_mm": 2632.0,
+      "radio_giro_int_estimado": false,
+      "vel_max_kmh": 18.9,
+      "autonomia": "Tanque diesel de 216 L",
+      "fuente": "Ficha Atlas Copco Scooptram ST3.5, 9851 2254 01g (08/2010): Deutz F8L-413FW 136 kW, cuchara de 2.7 m3 (3.5 yd3), 6 000 kg. La tesis (Deudor Yalico 2019, Tablas 21 y 24) dice 'Scooptram de 3.5 yd3' y 182 HP sin nombrar el modelo: 136 kW = 182 HP y la cuchara coinciden; la identificacion es inferida. Cuchara segun Tabla 21 (3.5 yd3 x 0.765). Precio, vida util y consumo siguen siendo estimaciones."
+    }
+  }
+}

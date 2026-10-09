@@ -1,6 +1,6 @@
 {
   "origen": "Caso_Practico_Scoop_Uchucchacua v3.xlsx",
-  "n": 37,
+  "n": 35,
   "referencias": [
     {
       "concepto": "Capacidad efectiva cuchara",
@@ -102,6 +102,15 @@
       "verificar": "https://www.mining.sandvik/en/news-and-media/news-archive/2025/03/buenaventura-selects-sandvik-to-provide-36-unit-fleet-in-peru/"
     },
     {
+      "concepto": "Atlas Copco Scooptram ST3.5 (scoop de la tesis)",
+      "valor": "8460x1956x2250 mm, 6 t, 2.7 m3 (3.5 yd3), 136 kW = 182 HP, giro 5470 / 2632 mm",
+      "fuente": "Atlas Copco ficha 9851 2254 01g (08/2010)",
+      "tabla": "-",
+      "pagina": "2-4",
+      "cita": "La tesis dice 'Scooptram de 3.5 yd3' y 182 HP sin nombrar el modelo; la identificacion es inferida",
+      "verificar": "https://mcdowellequipment.com/wp-content/uploads/2024/08/Epiroc-ST3.5.pdf"
+    },
+    {
       "concepto": "Toro LH307",
       "valor": "9300x2200x2300 mm, 7 t, 3.1-3.7 m3, 160 kW",
       "fuente": "Sandvik ficha TS3-LH307-B-04B",
@@ -136,15 +145,6 @@
       "pagina": "-",
       "cita": "Ver hoja Equipos",
       "verificar": "https://www.mining.sandvik/en/products/equipment/loaders/lh307-underground-lhd/"
-    },
-    {
-      "concepto": "Orcopampa: scoops electricos y STB",
-      "valor": "12 scoops 2.2/1.5/1 yd3, cable 120 m; STB 30 kWh, US$ 60 mil, ahorro US$ 200 mil/año",
-      "fuente": "Revista ProActivo",
-      "tabla": "-",
-      "pagina": "2022",
-      "cita": "Buenaventura + BEV del Peru",
-      "verificar": "https://proactivo.com.pe/buenaventura-desarrolla-para-su-mina-orcopampa-novedoso-y-economico-equipo-de-carguio-a-bateria/"
     },
     {
       "concepto": "Reduccion ventilacion con BEV",
@@ -255,15 +255,6 @@
       "verificar": "Fabricantes (Sandvik/Epiroc)"
     },
     {
-      "concepto": "Precio scoop electrico 2.2 yd3 (cable / STB)",
-      "valor": "350 k / 410 k",
-      "fuente": "Estimacion",
-      "tabla": "-",
-      "pagina": "-",
-      "cita": "STB documentado en US$ 60 mil; scoop base estimado",
-      "verificar": "BEV del Peru"
-    },
-    {
       "concepto": "Precio diesel",
       "valor": "US$ 1.50/gal",
       "fuente": "Estimacion",
@@ -289,15 +280,6 @@
       "pagina": "-",
       "cita": "Incluye beneficios",
       "verificar": "Convenio colectivo / INEI"
-    },
-    {
-      "concepto": "Dimensiones scoops electricos 2.2 yd3",
-      "valor": "1750 x 2000 x 7500 mm, 55 kW",
-      "fuente": "Estimacion para la clase",
-      "tabla": "-",
-      "pagina": "-",
-      "cita": "No hay ficha del equipo de Orcopampa",
-      "verificar": "BEV del Peru / fabricante"
     },
     {
       "concepto": "Caterpillar - Ferreyros",

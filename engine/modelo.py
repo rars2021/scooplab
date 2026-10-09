@@ -234,7 +234,10 @@ class Modelo:
 
     @property
     def seleccionado(self) -> Equipo:
-        return self.equipo(int(self.p.n_de_equipo))
+        try:
+            return self.equipo(int(self.p.n_de_equipo))
+        except KeyError:                 # apunta a un equipo retirado del catalogo
+            return self.equipos[0]
 
     @property
     def seccion_critica(self) -> Seccion:

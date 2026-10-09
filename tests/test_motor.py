@@ -142,6 +142,21 @@ def test_electricos_no_emiten_co2_en_punto_de_uso(m):
             assert r.aire_cfm == 0.0
 
 
+def test_solo_equipos_con_ficha_de_fabricante(m):
+    """No se mide con equipos sin marca ni modelo (datos/ajustes_equipos.json)."""
+    for e in m.equipos:
+        assert not e.modelo.lower().startswith("scoop"), f"{e.id} sin modelo"
+        assert e.fabricante.split()[0] in {"Atlas", "Sandvik", "Epiroc", "Caterpillar"}, e.id
+        assert e.radio_giro_mm, f"{e.id} sin radio de giro"
+
+
+def test_scoop_de_la_tesis_conserva_su_potencia(m):
+    """ST3.5: 136 kW = 182 HP, la base del factor de ventilacion."""
+    e = m.equipo(1)
+    assert e.potencia_hp == 182.0 and e.potencia_kw == 136.0
+    assert m.factor_ventilacion(e) == pytest.approx(1.0)
+
+
 def test_todos_los_equipos_tienen_dimensiones(m):
     for e in m.equipos:
         assert e.ancho_mm and e.alto_mm and e.largo_mm, f"{e.id} sin cotas"

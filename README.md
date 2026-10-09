@@ -27,7 +27,7 @@ python main.py --web 8777
 | `datos/` | Cinco JSON: equipos, parámetros, secciones, referencias y `red` (trazo de galerías) |
 | `ui/` | Interfaz: `index.html`, `rockwedge.css`, `app.js`, `vistas.js`, `iconos.js` y el 3D en módulos ES: `render3d.js`, `red3d.js`, `camaras.js`, `minimapa.js` |
 | `ui/vendor/` | three.js r169, OrbitControls, three-mesh-bvh y three-bvh-csg, locales (sin internet) |
-| `tests/` | 19 pruebas de control contra el Excel y 13 de la red de galerías |
+| `tests/` | 21 pruebas de control contra el Excel y 13 de la red de galerías |
 
 ## Validación
 
@@ -106,6 +106,19 @@ en hojas separadas.
 
 También: productividad específica, intensidad energética, índice de holgura,
 densidad de potencia, OEE y capacidad diaria.
+
+## Catálogo de equipos
+
+Solo se evalúan equipos con ficha técnica de fabricante. `datos/ajustes_equipos.json`
+se aplica en cada importación del Excel:
+
+- El scoop de 3.5 yd³ de la tesis se identifica como **Atlas Copco Scooptram ST3.5**
+  (136 kW = 182 HP, cuchara de 2.7 m³) y toma las cotas de su ficha. La tesis no
+  nombra el modelo: la identificación es inferida.
+- Los scoops eléctricos de 2.2 yd³ de Orcopampa (cable y STB a batería) se retiran:
+  ninguna fuente pública da su marca ni modelo.
+
+Los `n` no se renumeran (siguen la columna N del Excel), por eso faltan el 6 y el 7.
 
 ## Reimportar el Excel
 
