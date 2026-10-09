@@ -24,10 +24,11 @@ python main.py --web 8777
 | Carpeta | Contenido |
 |---|---|
 | `engine/` | Motor de cálculo: `modelo`, `red`, `ventilacion`, `payback`, `matriz`, `importar` |
-| `datos/` | Cinco JSON: equipos, parámetros, secciones, referencias y `red` (trazo de galerías) |
+| `datos/` | Equipos, parámetros, secciones, referencias, `red` y `casos/` (trazos de galerías), `ajustes_equipos` y `evidencia` |
+| `ui/fuentes/` | Capturas de las fichas de fabricante y de la tesis que se muestran en las ventanas |
 | `ui/` | Interfaz: `index.html`, `rockwedge.css`, `app.js`, `vistas.js`, `iconos.js` y el 3D en módulos ES: `render3d.js`, `red3d.js`, `camaras.js`, `minimapa.js` |
 | `ui/vendor/` | three.js r169, OrbitControls, three-mesh-bvh y three-bvh-csg, locales (sin internet) |
-| `tests/` | 21 pruebas de control contra el Excel y 13 de la red de galerías |
+| `tests/` | 21 pruebas de control contra el Excel, 14 de la red de galerías y 8 de casos y velocidad en pendiente |
 
 ## Validación
 
@@ -84,6 +85,30 @@ de la curva es mayor que su radio de eje mínimo, y entra si
 el veredicto de sección. El Excel solo trae el radio de giro exterior; el interior
 (`radio_giro_int_mm` en `equipos.json`) está **estimado** como exterior − 1.21 × ancho
 hasta cargar el de catálogo.
+
+## Casos de simulación y velocidad
+
+En Simulación, el selector sobre el minimapa cambia de trazo (`datos/casos.json`):
+Rampa Fernando (cargado en bajada), profundización (cargado en subida a +13 %) y
+corte y relleno con ventana negativa de −17 % a la veta. Cada caso muestra su
+recorrido, ciclo y rendimiento para el equipo elegido, junto al del Excel.
+
+La animación corre en tiempo real (1×, con 2×/4×/8×): la velocidad que se ve es
+la del cálculo. En cada tramo vale la velocidad del modelo, salvo que la potencia
+no alcance en subida: `v = η·P / (m·g·(rodadura + pendiente))`, con η = 0.49 y 3 %
+de rodadura, calibrado con la tabla de desempeño en pendiente de la ficha del
+ST3.5 y contrastado con la del ST7. El modo **Ciclo** es el ciclo del Excel a
+nivel (80 m), con su maniobra y su giro.
+
+## Fuentes reales
+
+La ventana Equipo muestra capturas de la ficha del fabricante (con su
+identificador y enlace al original) y, donde lo hay, un video. Ciclo, Costos,
+Ventilación y Geometría muestran la página de la tesis de donde sale el dato.
+Las fichas son propiedad de Sandvik, Epiroc/Atlas Copco y Caterpillar: se citan
+como fuente; revisa sus condiciones antes de redistribuirlas. Los radios de giro
+de ST3.5, LH307, ST7, R1300G y LH203 son los de esas fichas; los del ST7 Battery
+y el Artisan A10 siguen estimados.
 
 ## Cámaras
 

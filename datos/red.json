@@ -181,7 +181,7 @@
         "J2"
       ],
       "radio_m": 6.0,
-      "sobreancho_mm": 200.0
+      "sobreancho_mm": 400.0
     },
     {
       "id": "t_frente",
@@ -192,7 +192,7 @@
         "F"
       ],
       "radio_m": 6.0,
-      "sobreancho_mm": 200.0
+      "sobreancho_mm": 400.0
     },
     {
       "id": "echadero_entrada",

@@ -280,6 +280,58 @@ function arcosDeSeccion(tr, s0, s1, secFn, cada, destino) {
 
 /* ------------------------------------------------ construccion ---------- */
 const ENSANCHE = 3.0;        // m en que el sobreancho entra y sale de la curva
+const D_PILA = 1.4, D_ECH = 2.4;   // m del fondo de la labor al centro de la pila / del echadero
+
+/** Franja que barre el equipo en una curva de radio R (m). Igual que engine/red.py. */
+export function barridoM(eq, R) {
+  const w = eq.ancho_mm / 1000, rext = (eq.radio_giro_mm || 0) / 1000;
+  const rint = eq.radio_giro_int_mm ? eq.radio_giro_int_mm / 1000 : Math.max(0, rext - 1.21 * w);
+  const a2 = Math.max(0, rext * rext - (rint + w) * (rint + w));
+  const r = Math.max(R, w / 2);
+  return { barrido: Math.sqrt((r + w / 2) ** 2 + a2) - (r - w / 2), rmin: rint + w / 2 };
+}
+
+/**
+ * Red minima para el modo Ciclo: una galeria recta con el frente en un extremo,
+ * la camara de maniobra en el otro y un crucero lateral al echadero. Todo a
+ * nivel y con la seccion critica. El largo de la galeria se ajusta para que el
+ * acarreo recorra la distancia del modelo (Excel).
+ */
+export function redDeCiclo(eq, sec, ctx) {
+  const L = eq.largo_mm / 1000;
+  const hol = (ctx.holguraLado ?? 300) / 1000;
+  const b0 = barridoM(eq, 6);
+  const R = Math.max(6, Math.ceil((b0.rmin + 0.8) * 2) / 2);
+  const b = barridoM(eq, R);
+  const pide = b.barrido + 2 * hol;
+  const sob = Math.max(0, Math.ceil((pide - sec.ancho_mm / 1000 + 0.1) * 10) / 10);
+  const JM = R + 0.62 * L + 1.5, JO = R + 0.87 * L + 3.5;
+  const cola = 0.46 * L + 1, pf = D_PILA + 0.2 + 0.54 * L, pe = D_ECH - 0.3 + 0.54 * L;
+  const meta = ctx.distancia_m || 80;
+  const FJ = Math.max(L + 8, meta - (2 * JM + JO - 0.4292 * R - pf - pe - 2 * cola));
+  const n = (id, nombre, tipo, x, y) => ({ id, nombre, tipo, x, y, z: 0 });
+  const doc = {
+    nodos: [n("F", "Frente", "frente", -FJ, 0), n("J", "Cruce", "interseccion", 0, 0),
+            n("M", "Camara de maniobra", "camara", JM, 0), n("O", "Echadero", "echadero", 0, -JO)],
+    tramos: [
+      { id: "galeria", nombre: "Labor de produccion", tipo: "ventana", seccion: sec.clave,
+        perfil: "herradura", pendiente_pct: 0, nodos: ["F", "J", "M"] },
+      { id: "crucero", nombre: "Crucero al echadero", tipo: "crucero", seccion: sec.clave,
+        perfil: "boveda", pendiente_pct: 0, nodos: ["J", "O"] },
+    ],
+    curvas: [{ id: "giro", nombre: "Giro al echadero", nodo: "J", entre: ["M", "O"],
+               radio_m: R, sobreancho_mm: sob * 1000 }],
+    ruta: {
+      acarreo: [{ marcha: "reversa", nodos: ["F", "J", "M"] }, { marcha: "adelante", nodos: ["M", "J", "O"] }],
+      retorno: [{ marcha: "reversa", nodos: ["O", "J", "M"] }, { marcha: "adelante", nodos: ["M", "J", "F"] }],
+    },
+    revision: { giro: {
+      id: "giro", nodo: "J", radio_m: R, radio_min_m: b.rmin, gira: true, cabe: true,
+      ancho_barrido_mm: b.barrido * 1000, ancho_req_mm: pide * 1000,
+      ancho_disp_mm: sec.ancho_mm + sob * 1000 } },
+  };
+  return doc;
+}
 
 /**
  * Construye la red completa. `util` trae lo que comparte con render3d.js:
@@ -373,7 +425,8 @@ export function construirRed(red, eq, ctx, util) {
       const texto = !r.gira
         ? `R ${cv.radio_m} m < giro minimo ${r.radio_min_m.toFixed(1)} m`
         : `R ${cv.radio_m} m · pide ${m(r.ancho_req_mm)} · hay ${m(r.ancho_disp_mm)} m`;
-      const et = etiqueta(texto, cabe ? p.apagado : p.bad, cabe ? 1.0 : 1.35);
+      const et = etiqueta(cabe ? `R ${cv.radio_m} m` : texto,
+        cabe ? p.apagado : p.bad, cabe ? 0.9 : 1.35);
       const em = tr.en(ar.s0 + ar.len / 2);
       aTres(em, 0, Math.max(sa.alto_mm, sc.alto_mm) / 1000 + 0.7, et.position);
       sobrecapa.add(et);
@@ -409,15 +462,27 @@ export function construirRed(red, eq, ctx, util) {
   geo.deleteAttribute("normal");
   geo.computeVertexNormals();                  // sin indice: caras planas, aspecto de roca
   solidos.forEach(s => s.dispose());
+  // cada cara toma un tono algo distinto: se lee como roca y no como plastico
+  {
+    const nv = geo.getAttribute("position").count, col = new Float32Array(nv * 3);
+    let sem = 11;
+    for (let i = 0; i < nv; i += 3) {
+      sem = (sem * 16807) % 2147483647;
+      const k = 0.86 + 0.14 * (sem / 2147483647);
+      for (let j = 0; j < 9; j++) col[i * 3 + j] = k;
+    }
+    geo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  }
 
   const roca = new THREE.MeshStandardMaterial({
-    color: claro() ? 0xb9c0c9 : 0x4b5159, roughness: 1, metalness: 0, side: THREE.BackSide });
+    color: claro() ? 0xc3c8cf : 0x565c65, roughness: 1, metalness: 0, side: THREE.BackSide,
+    vertexColors: true });
   const malla = new THREE.Mesh(geo, roca);
   malla.receiveShadow = true;
   grupo.add(malla);
   // cascara exterior, solo en el estilo transparente
   const cascara = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({
-    color: claro() ? 0x9aa3ad : 0x7d8792, roughness: 1, transparent: true, opacity: 0.16,
+    color: claro() ? 0x6f7884 : 0x8d97a3, roughness: 1, transparent: true, opacity: 0.13,
     depthWrite: false, side: THREE.FrontSide }));
   cascara.visible = false;
   grupo.add(cascara);
@@ -454,7 +519,6 @@ export function construirRed(red, eq, ctx, util) {
   };
   const frente = red.doc.nodos.find(n => n.tipo === "frente");
   const ech = red.doc.nodos.find(n => n.tipo === "echadero");
-  const D_PILA = 1.4, D_ECH = 2.4;
   let semilla = 7;
   const azar = () => { semilla = (semilla * 16807) % 2147483647; return semilla / 2147483647; };
   if (frente) {
@@ -488,6 +552,34 @@ export function construirRed(red, eq, ctx, util) {
     et.position.set(x, a.z + 5.4, -y);
     grupo.add(et);
   }
+
+  // ---- servicios: manga de ventilacion en la corona y dos tuberias en el hastial
+  const servicios = new THREE.Group();
+  const techoEn = (t, u, w, h) => {
+    const herr = t.perfil === "herradura";
+    const hw = herr ? Math.max(h - w / 2, h * 0.45) : h * 0.68;
+    return hw + (h - hw) * Math.sqrt(Math.max(0, 1 - (u / (w / 2)) ** 2));
+  };
+  const tubo = (t, u, v, radio, mat) => {
+    const pts = [], n = Math.max(2, Math.ceil(t.tr.largo / 1.5));
+    for (let k = 0; k <= n; k++) {
+      const q = new THREE.Vector3();
+      aTres(t.tr.en(0.4 + (t.tr.largo - 0.8) * k / n), u, v, q);
+      pts.push(q);
+    }
+    const m = new THREE.Mesh(new THREE.TubeGeometry(
+      new THREE.CatmullRomCurve3(pts), n * 2, radio, 8, false), mat);
+    servicios.add(m);
+  };
+  const matManga = MAT.mate(0xc9a227), matAgua = MAT.acero(0x3d6fa5), matAire = MAT.acero(0x8a929b);
+  red.tramos.forEach(t => {
+    const w = t.sec.ancho_mm / 1000, h = t.sec.alto_mm / 1000, u = 0.36 * w;
+    tubo(t, u, techoEn(t, u, w, h) - 0.30, 0.19, matManga);
+    // las tuberias van altas, al otro lado de la manga: asi no cruzan los accesos
+    tubo(t, -0.38 * w, techoEn(t, 0.38 * w, w, h) - 0.10, 0.04, matAgua);
+    tubo(t, -0.31 * w, techoEn(t, 0.31 * w, w, h) - 0.09, 0.03, matAire);
+  });
+  grupo.add(servicios);
 
   // ---- lamparas en el techo
   const lamparas = [];
@@ -558,7 +650,14 @@ export function construirRed(red, eq, ctx, util) {
     grupo, malla, cascara, lamparas, rotulos, centro, tam, red,
     pisoEn, apartar, mundoNodo, mundoPlanta, plantaDeMundo, planta,
     D_PILA, D_ECH,
-    setEstilo(e) { cascara.visible = e === "transparente"; },
+    /** corte: cara interior solida. transparente: toda la roca en vidrio, se ve a traves. */
+    setEstilo(e) {
+      const t = e === "transparente";
+      cascara.visible = t;
+      roca.transparent = t; roca.opacity = t ? 0.2 : 1; roca.depthWrite = !t;
+      roca.needsUpdate = true;
+      servicios.visible = !t;
+    },
   };
 }
 

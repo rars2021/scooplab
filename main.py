@@ -24,6 +24,7 @@ from engine import importar as mod_importar          # noqa: E402
 from engine.matriz import Matriz                      # noqa: E402
 from engine.modelo import DATOS, Modelo, Parametros   # noqa: E402
 from engine.payback import Payback                    # noqa: E402
+from engine.red import velocidad_en_pendiente         # noqa: E402
 from engine.ventilacion import comparar, escenario_tesis  # noqa: E402
 
 
@@ -54,7 +55,9 @@ class Api:
         pa = json.loads((DATOS / "params.json").read_text(encoding="utf-8"))
         se = json.loads((DATOS / "secciones.json").read_text(encoding="utf-8"))
         rf = json.loads((DATOS / "referencias.json").read_text(encoding="utf-8"))
+        ev = DATOS / "evidencia.json"
         return {
+            "evidencia": json.loads(ev.read_text(encoding="utf-8")) if ev.exists() else None,
             "equipos": eq["equipos"], "params": pa,
             "secciones": se["secciones"], "referencias": rf["referencias"],
         }
@@ -121,6 +124,8 @@ class Api:
             "t_descarga": p.tiempo_de_descarga,
             "t_retorno": round(t_retorno, 3),
             "distancia_m": d_ida,
+            "vel_cargado": p.velocidad_cargado,
+            "vel_vacio": p.velocidad_vacio,
             "cap_cuchara": round(self.m.capacidad_cuchara(e), 3),
             "meta": meta,
             "n_sel": self.m.n_equipos(e, meta),
@@ -180,7 +185,38 @@ class Api:
             "radio_int_estimado": bool(e.radio_giro_int_estimado or not e.radio_giro_int_mm),
             "longitud_acarreo_m": round(red.longitud_ruta("acarreo"), 1),
             "longitud_retorno_m": round(red.longitud_ruta("retorno"), 1),
+            "caso": self.m.caso,
+            "vel": red.velocidades(e, self.m.p.velocidad_cargado, self.m.p.velocidad_vacio),
         }
+
+    def casos(self, n: int | None = None) -> dict:
+        """Casos de simulacion con su ciclo y rendimiento para un equipo."""
+        e = self.m.equipo(int(n)) if n else self.m.seleccionado
+        p = self.m.p
+        filas = []
+        for c in self.m.casos:
+            red = self.m.redes[c["id"]]
+            r = self.m.ciclo_en_red(e, red)
+            rev = red.revisar(e, p.holgura_minima_por_lado)
+            # solo los bordes que el equipo recorre cargado, en su sentido
+            vels = [velocidad_en_pendiente(e, red.pendiente_en_sentido(x, y), True, p.velocidad_cargado)
+                    for leg in red.doc["ruta"]["acarreo"]
+                    for x, y in zip(leg["nodos"], leg["nodos"][1:])]
+            filas.append({
+                **c, **{k: round(v, 2) for k, v in r.items()},
+                "apto_curvas": all(x.cabe for x in rev),
+                "vel_min_cargado": round(min(vels), 2),
+                "pendiente_max": max(abs(t.get("pendiente_pct", 0.0)) for t in red.tramos),
+            })
+        return {"actual": self.m.caso, "casos": filas, "equipo": e.modelo,
+                "ciclo_excel": p.ciclo_de_la_tesis,
+                "rend_excel": round(self.m.rend_efectivo(e), 2)}
+
+    def set_caso(self, caso: str) -> dict:
+        if caso not in self.m.redes:
+            return {"ok": False, "error": f"caso desconocido: {caso}"}
+        self.m.usar_caso(caso)
+        return {"ok": True, "caso": caso}
 
     # ------------------------------------------------------------ geometria
 
@@ -336,16 +372,23 @@ class Api:
             json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
         return {"ok": True, "clave": clave, "valor": v}
 
+    def _recargar(self) -> None:
+        """Modelo nuevo, conservando el caso de simulacion elegido."""
+        caso = self.m.caso
+        self.m = Modelo()
+        if caso in self.m.redes:
+            self.m.usar_caso(caso)
+
     def restablecer(self) -> dict:
         """Vuelve a importar el Excel: descarta los cambios manuales."""
         mod_importar.importar()
-        self.m = Modelo()
+        self._recargar()
         return {"ok": True}
 
     def reimportar(self, ruta: str | None = None) -> dict:
         try:
             salidas = mod_importar.importar(Path(ruta) if ruta else None)
-            self.m = Modelo()
+            self._recargar()
             return {"ok": True, "archivos": {k: str(v) for k, v in salidas.items()}}
         except Exception as e:
             return {"ok": False, "error": str(e)}
@@ -374,7 +417,7 @@ class Api:
         else:
             return {"ok": False, "error": f"equipo {n} no existe"}
         ruta.write_text(json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
-        self.m = Modelo()
+        self._recargar()
         return {"ok": True}
 
     def referencias(self) -> list[dict]:

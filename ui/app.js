@@ -162,8 +162,9 @@ async function pintar(id) {
   if (!vista) { cuerpo.innerHTML = `<div class="nota">Seccion en construccion.</div>`; return; }
   cuerpo.innerHTML = `<div class="lectura"><span>calculando…</span></div>`;
   try {
-    cuerpo.innerHTML = await vista();
+    cuerpo.innerHTML = (await vista()) + htmlEvidencia(id);
     if (VISTAS.conectar[id]) VISTAS.conectar[id](cuerpo);
+    conectarEvidencia(cuerpo);
   } catch (e) {
     console.error(e);
     cuerpo.innerHTML = `<div class="nota bad">Error al construir la vista: ${fmt.esc(e.message)}</div>`;
@@ -218,6 +219,60 @@ function redimensionable(tirador, el) {
     el.style.height = Math.max(200, oh + e.clientY - sy) + "px";
   });
   tirador.addEventListener("pointerup", () => { on = false; });
+}
+
+/* ----------------------------- evidencia -------------------------------- */
+/**
+ * Documentos reales al pie de la ventana: capturas de la ficha del fabricante
+ * (ventana Equipo) o de la tesis (Ciclo, Costos, Ventilacion, Geometria), con
+ * su identificador y enlace al original. Nada de esto es generado.
+ */
+function htmlEvidencia(id) {
+  const ev = D.evidencia;
+  if (!ev) return "";
+  const e = id === "equipo" ? ev.equipos[String(D.sel)] : ev.ventanas[id];
+  if (!e) return "";
+  const titulo = id === "equipo" ? "FICHA DEL FABRICANTE" : "FUENTE: TESIS";
+  const ref = e.documento
+    ? `${fmt.esc(e.documento)}${e.id ? ` · <span class="mono">${fmt.esc(e.id)}</span>` : ""}${e.fecha ? ` · ${fmt.esc(e.fecha)}` : ""}${e.editor ? ` · © ${fmt.esc(e.editor)}` : ""}`
+    : "";
+  const caps = (e.paginas || []).map(p => `
+    <figure class="evid-cap" data-img="${fmt.esc(p.img)}" data-pie="${fmt.esc(p.pie)} (p. ${p.pagina})">
+      <img src="${fmt.esc(p.img)}" alt="${fmt.esc(p.pie)}">
+      <figcaption>${fmt.esc(p.pie)} <span class="mono">p. ${p.pagina}</span></figcaption>
+    </figure>`).join("");
+  const v = e.video;
+  const video = v ? `<div class="evid-video">
+      <button class="btn" data-yt="${fmt.esc(v.youtube)}">▶ Ver video: ${fmt.esc(v.titulo)}</button>
+      <span class="evid-canal">${v.oficial ? "canal oficial" : "video de distribuidor"} ·
+        ${fmt.esc(v.canal)} · YouTube, requiere internet</span></div>` : "";
+  return `<div class="panel evid" style="margin-top:10px"><div class="head">${titulo}
+      <span class="r">documento real, no generado</span></div>
+    <div class="body">
+      ${ref ? `<div class="evid-ref">${ref}${e.url
+        ? ` · <a href="${fmt.esc(e.url)}" target="_blank" rel="noopener">abrir original</a>` : ""}</div>` : ""}
+      ${e.nota ? `<div class="evid-nota">${fmt.esc(e.nota)}</div>` : ""}
+      ${caps ? `<div class="evid-caps">${caps}</div>` : ""}
+      ${video}
+    </div></div>`;
+}
+
+function conectarEvidencia(c) {
+  c.querySelectorAll(".evid-cap").forEach(f => f.addEventListener("click", () => {
+    const v = document.createElement("div");
+    v.className = "evid-visor";
+    v.innerHTML = `<img src="${f.dataset.img}" alt=""><div class="pie">${fmt.esc(f.dataset.pie)} · clic para cerrar</div>`;
+    v.addEventListener("click", () => v.remove());
+    document.body.appendChild(v);
+  }));
+  c.querySelectorAll("[data-yt]").forEach(b => b.addEventListener("click", () => {
+    const fr = document.createElement("iframe");
+    fr.className = "evid-yt";
+    fr.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(b.dataset.yt)}?autoplay=1&rel=0`;
+    fr.allow = "autoplay; encrypted-media; picture-in-picture";
+    fr.allowFullscreen = true;
+    b.closest(".evid-video").replaceChildren(fr);
+  }));
 }
 
 /* ----------------------------- barra ------------------------------------ */
@@ -324,6 +379,7 @@ async function refrescarEscena() {
     Render3D.setContexto(ctx);
   }
   Render3D.cargarEquipo(equipoSel(), seccionCritica(), ctx || {});
+  pintarCasos();
 }
 
 function seccionCritica() {
@@ -371,6 +427,7 @@ async function iniciar() {
     D.params = datos.params || null;
     D.secciones = datos.secciones || [];
     D.referencias = datos.referencias || [];
+    D.evidencia = datos.evidencia || null;
     if (!D.equipos.some(e => e.n === D.sel)) D.sel = D.equipos[0]?.n ?? 1;
   }
 
@@ -401,6 +458,8 @@ async function iniciar() {
     if (sm) sm.hidden = b.dataset.modo !== "equivalencia";
     const rp = document.getElementById("reproductor");
     if (rp) rp.hidden = b.dataset.modo !== "simulacion";
+    const sv = document.getElementById("segVel");
+    if (sv) sv.hidden = b.dataset.modo !== "simulacion" && b.dataset.modo !== "ciclo";
     Render3D.setModo(b.dataset.modo);
     if (b.dataset.modo === "equivalencia") refrescarEscena();
     if (b.dataset.modo !== "ficha") mostrarEscena();
@@ -409,8 +468,17 @@ async function iniciar() {
   if (window.Render3D) Render3D.alCambiarFase(f => {
     const el = document.getElementById("faseCiclo");
     if (!el || Render3D.getModo() !== "ciclo") return;
-    el.innerHTML = `<b>${fmt.esc(f.fase)}</b> · min ${f.minuto} de ${f.totalMin}
+    el.innerHTML = `<b>${fmt.esc(f.fase)}</b> · min ${f.minuto} de ${f.totalMin} ·
+      <b>${f.kmh}</b> km/h · acarreo ${f.metros.acarreo.toFixed(0)} m
       <span class="barra"><i style="width:${(f.progreso * 100).toFixed(0)}%"></i></span>`;
+  });
+
+  const segVel = document.getElementById("segVel");
+  if (segVel) segVel.addEventListener("click", e => {
+    const b = e.target.closest("[data-vel]");
+    if (!b || !window.Render3D) return;
+    segVel.querySelectorAll("button").forEach(x => x.classList.toggle("sel", x === b));
+    Render3D.setSimVel(+b.dataset.vel);
   });
 
   const segMetaEq = document.getElementById("segMetaEq");
@@ -423,6 +491,7 @@ async function iniciar() {
   });
 
   conectarReproductor();
+  conectarCasos();
 
   document.getElementById("inicio").addEventListener("click", mostrarEscena);
   document.getElementById("tpTema").addEventListener("click", () =>
@@ -488,9 +557,43 @@ function conectarCamaras() {
     segCam.querySelector('[data-cam="seguir"]').disabled = !est.maquina;
     segCam.querySelector('[data-cam="cabina"]').disabled = !est.maquina;
     segVistas.hidden = segEstilo.hidden = mapa.hidden = !est.red;
+    document.getElementById("casos").hidden = est.modo !== "simulacion" || !est.red;
     segVistas.innerHTML = est.vistas.map(v =>
       `<button data-vista="${v.id}">${fmt.esc(v.nombre)}</button>`).join("");
     marcarCam(est.camara);
+  });
+}
+
+/* ------------------------- casos de simulacion --------------------------- */
+async function pintarCasos() {
+  const sel = document.getElementById("selCaso"), lec = document.getElementById("casoLectura");
+  if (!sel) return;
+  const r = await api("casos", D.sel);
+  if (!r || !r.casos.length) return;
+  sel.innerHTML = r.casos.map(c =>
+    `<option value="${c.id}" ${c.id === r.actual ? "selected" : ""}>${fmt.esc(c.nombre)}</option>`).join("");
+  const c = r.casos.find(x => x.id === r.actual) || r.casos[0];
+  const dz = c.desnivel;
+  lec.innerHTML = `${fmt.esc(c.descripcion)}
+    <div class="kv2">
+      <span>acarreo / retorno</span><b>${fmt.n(c.d_acarreo, 0)} / ${fmt.n(c.d_retorno, 0)} m</b>
+      <span>desnivel cargado</span><b>${dz > 0 ? "+" : ""}${fmt.n(dz, 1)} m</b>
+      <span>pendiente maxima</span><b>${fmt.n(c.pendiente_max, 0)} %</b>
+      <span>vel. minima cargado</span><b>${fmt.n(c.vel_min_cargado, 1)} km/h</b>
+      <span>ciclo en este trazo</span><b>${fmt.n(c.ciclo, 2)} min</b>
+      <span>rend. efectivo</span><b>${fmt.masa(c.rend_efectivo, 1)} ${fmt.u()}/h</b>
+      <span>Excel (ciclo ${fmt.n(r.ciclo_excel, 1)} min)</span><b>${fmt.masa(r.rend_excel, 1)} ${fmt.u()}/h</b>
+      <span>curvas</span><b class="${c.apto_curvas ? "ok" : "bad"}">${c.apto_curvas ? "gira en todas" : "no entra"}</b>
+    </div>`;
+}
+
+function conectarCasos() {
+  const sel = document.getElementById("selCaso");
+  if (!sel) return;
+  sel.addEventListener("change", async () => {
+    await api("set_caso", sel.value);
+    await refrescarEscena();
+    Object.keys(wins).forEach(id => wins[id].abierta && pintar(id));
   });
 }
 
@@ -541,6 +644,7 @@ function conectarReproductor() {
       lectura.innerHTML = `ciclo <b>${f.ciclo}</b>/${f.ciclos} ·
         <span class="f">${fmt.esc(f.fase)}</span> ·
         min <b>${f.minuto}</b>/${f.totalMin} ·
+        <b>${f.kmh}</b> km/h ·
         <b>${f.masa}</b> ${fmt.esc(f.unidad)}`;
     }
   });

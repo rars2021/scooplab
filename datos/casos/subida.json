@@ -1,0 +1,243 @@
+{
+  "origen": "Trazo de diseno, no topografia. Pendiente de rampa principal segun la tesis (13 %).",
+  "nodos": [
+    {
+      "id": "F",
+      "nombre": "Frente del tajo",
+      "tipo": "frente",
+      "x": -18,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "id": "J1",
+      "nombre": "Interseccion ventana - rampa",
+      "tipo": "interseccion",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "id": "M",
+      "nombre": "Camara de maniobra",
+      "tipo": "camara",
+      "x": 14,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "id": "C",
+      "nombre": "Curva de la rampa",
+      "tipo": "curva",
+      "x": 0,
+      "y": 40,
+      "z": 4.977
+    },
+    {
+      "id": "K",
+      "nombre": "Acceso a la camara del echadero",
+      "tipo": "interseccion",
+      "x": 30,
+      "y": 40,
+      "z": 8.654
+    },
+    {
+      "id": "E",
+      "nombre": "Rampa, hacia el nivel superior",
+      "tipo": "extremo",
+      "x": 46,
+      "y": 40,
+      "z": 10.734
+    },
+    {
+      "id": "O",
+      "nombre": "Echadero",
+      "tipo": "echadero",
+      "x": 30,
+      "y": 58,
+      "z": 8.654
+    }
+  ],
+  "tramos": [
+    {
+      "id": "ventana",
+      "nombre": "Ventana de produccion",
+      "tipo": "ventana",
+      "seccion": "labor_de_produccion_ventanas",
+      "perfil": "herradura",
+      "pendiente_pct": 0.0,
+      "nodos": [
+        "F",
+        "J1",
+        "M"
+      ]
+    },
+    {
+      "id": "rampa",
+      "nombre": "Rampa de profundizacion",
+      "tipo": "rampa",
+      "seccion": "rampa_fernando",
+      "perfil": "boveda",
+      "pendiente_pct": 13.0,
+      "nodos": [
+        "J1",
+        "C",
+        "K",
+        "E"
+      ]
+    },
+    {
+      "id": "camara_echadero",
+      "nombre": "Camara del echadero",
+      "tipo": "camara",
+      "seccion": "rampa_fernando",
+      "perfil": "boveda",
+      "pendiente_pct": 0.0,
+      "nodos": [
+        "K",
+        "O"
+      ]
+    }
+  ],
+  "curvas": [
+    {
+      "id": "t_maniobra",
+      "nombre": "Salida de la camara de maniobra",
+      "nodo": "J1",
+      "entre": [
+        "M",
+        "C"
+      ],
+      "radio_m": 6.0,
+      "sobreancho_mm": 400.0
+    },
+    {
+      "id": "t_frente",
+      "nombre": "Giro de la rampa al frente",
+      "nodo": "J1",
+      "entre": [
+        "C",
+        "F"
+      ],
+      "radio_m": 6.0,
+      "sobreancho_mm": 400.0
+    },
+    {
+      "id": "curva_rampa",
+      "nombre": "Curva de la rampa",
+      "nodo": "C",
+      "entre": [
+        "J1",
+        "K"
+      ],
+      "radio_m": 8.0,
+      "sobreancho_mm": 0.0
+    },
+    {
+      "id": "echadero_entrada",
+      "nombre": "Entrada a la camara del echadero",
+      "nodo": "K",
+      "entre": [
+        "C",
+        "O"
+      ],
+      "radio_m": 6.0,
+      "sobreancho_mm": 0.0
+    },
+    {
+      "id": "echadero_salida",
+      "nombre": "Salida en reversa del echadero",
+      "nodo": "K",
+      "entre": [
+        "O",
+        "E"
+      ],
+      "radio_m": 6.0,
+      "sobreancho_mm": 0.0
+    }
+  ],
+  "ruta": {
+    "acarreo": [
+      {
+        "marcha": "reversa",
+        "nodos": [
+          "F",
+          "J1",
+          "M"
+        ]
+      },
+      {
+        "marcha": "adelante",
+        "nodos": [
+          "M",
+          "J1",
+          "C",
+          "K",
+          "O"
+        ]
+      }
+    ],
+    "retorno": [
+      {
+        "marcha": "reversa",
+        "nodos": [
+          "O",
+          "K",
+          "E"
+        ]
+      },
+      {
+        "marcha": "adelante",
+        "nodos": [
+          "E",
+          "K",
+          "C",
+          "J1",
+          "F"
+        ]
+      }
+    ]
+  },
+  "inicio": [
+    "J1",
+    "F"
+  ],
+  "vistas": [
+    {
+      "id": "general",
+      "nombre": "General"
+    },
+    {
+      "id": "frente",
+      "nombre": "Frente",
+      "nodo": "F",
+      "desde": "J1",
+      "theta": -2.0,
+      "radio": 17
+    },
+    {
+      "id": "cruce",
+      "nombre": "Interseccion",
+      "nodo": "J1",
+      "desde": "M",
+      "theta": -1.1,
+      "radio": 20
+    },
+    {
+      "id": "curva",
+      "nombre": "Curva",
+      "nodo": "C",
+      "desde": "J1",
+      "theta": 2.6,
+      "radio": 24
+    },
+    {
+      "id": "echadero",
+      "nombre": "Echadero",
+      "nodo": "O",
+      "desde": "K",
+      "theta": 0.6,
+      "radio": 19
+    }
+  ]
+}

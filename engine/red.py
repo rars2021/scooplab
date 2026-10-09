@@ -24,6 +24,24 @@ from typing import Any
 FACTOR_RADIO_INT = 1.21      # R_int ~ R_ext - 1.21 W cuando el catalogo no lo trae
 RECTO = 1e-3                 # rad: por debajo, dos bordes se toman como alineados
 
+# Velocidad en pendiente: la potencia disponible en rueda limita la subida.
+#   v = eta x P / (m x g x (rodadura + pendiente))
+# eta sale de la tabla de desempeno de la ficha del Scooptram ST3.5 (cargado,
+# 12.5 % -> 6.9 km/h) y se contrasta con la del ST7; 3 % de rodadura es el
+# supuesto de esas mismas tablas. En bajada manda la velocidad del modelo.
+ETA_TRACCION = 0.49
+RODADURA = 0.03
+G = 9.81
+
+
+def velocidad_en_pendiente(e, pendiente_pct: float, cargado: bool, v_plano_kmh: float) -> float:
+    """km/h en un tramo: la del modelo, salvo que la potencia no alcance."""
+    masa = e.peso_kg + (e.carga_util_kg if cargado else 0.0)
+    resistencia = masa * G * (RODADURA + pendiente_pct / 100.0)      # N
+    if resistencia <= 0:
+        return v_plano_kmh
+    return min(v_plano_kmh, ETA_TRACCION * e.potencia_kw * 1000.0 / resistencia * 3.6)
+
 
 @dataclass
 class RevisionCurva:
@@ -131,6 +149,45 @@ class Red:
     def longitud_ruta(self, fase: str) -> float:
         """Recorrido de una fase ('acarreo' o 'retorno'), maniobras incluidas."""
         return sum(self.longitud(leg["nodos"]) for leg in self.doc["ruta"][fase])
+
+    def pendiente_en_sentido(self, a: str, b: str) -> float:
+        """Pendiente (%) del borde recorrido de a hacia b."""
+        t = self.tramo_de(a, b)
+        ns = t["nodos"]
+        directo = ns.index(b) == ns.index(a) + 1
+        return t.get("pendiente_pct", 0.0) * (1 if directo else -1)
+
+    def tiempo_min(self, e, fase: str, v_plano_kmh: float) -> float:
+        """Minutos de viaje de una fase, con la velocidad de cada tramo."""
+        cargado = fase == "acarreo"
+        total = 0.0
+        for leg in self.doc["ruta"][fase]:
+            ns = leg["nodos"]
+            horas = bordes = 0.0
+            for a, b in zip(ns, ns[1:]):
+                p = self.pendiente_en_sentido(a, b)
+                largo = self._dist(a, b) * math.sqrt(1.0 + (p / 100.0) ** 2)
+                horas += largo / 1000.0 / velocidad_en_pendiente(e, p, cargado, v_plano_kmh)
+                bordes += largo
+            # las curvas acortan el recorrido respecto de la poligonal
+            total += horas * 60.0 * self.longitud(ns) / bordes
+        return total
+
+    def velocidades(self, e, v_cargado: float, v_vacio: float) -> dict:
+        """km/h por tramo: [en el sentido de sus nodos, en contra], cargado y vacio."""
+        out = {}
+        for t in self.tramos:
+            p = t.get("pendiente_pct", 0.0)
+            out[t["id"]] = {
+                "cargado": [round(velocidad_en_pendiente(e, s * p, True, v_cargado), 2) for s in (1, -1)],
+                "vacio": [round(velocidad_en_pendiente(e, s * p, False, v_vacio), 2) for s in (1, -1)],
+            }
+        return out
+
+    def desnivel(self, fase: str) -> float:
+        """Cota de llegada menos cota de salida de una fase, en m."""
+        legs = self.doc["ruta"][fase]
+        return self.nodos[legs[-1]["nodos"][-1]]["z"] - self.nodos[legs[0]["nodos"][0]]["z"]
 
     def pendiente_real(self, tramo: dict) -> float:
         """Pendiente (%) que resulta de las cotas, sobre la longitud desarrollada."""

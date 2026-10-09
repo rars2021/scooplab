@@ -35,10 +35,12 @@ def _rutas_datos() -> tuple[Path, Path]:
         else:
             # carpeta de una version anterior: se agregan los JSON que no existian
             import shutil
-            for f in fabrica.glob("*.json"):
-                if not (trabajo / f.name).exists():
+            for f in fabrica.rglob("*.json"):
+                destino = trabajo / f.relative_to(fabrica)
+                if not destino.exists():
                     try:
-                        shutil.copy2(f, trabajo / f.name)
+                        destino.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(f, destino)
                     except Exception:
                         pass
         return fabrica, trabajo
@@ -222,9 +224,49 @@ class Modelo:
         self.p = params
         self.equipos = equipos
         self.secciones = secciones
-        self.red = red if red is not None else Red.cargar(DATOS / "red.json", secciones)
+        # casos de simulacion: cada uno es una red de galerias distinta
+        self.casos: list[dict] = []
+        self.redes: dict[str, Red] = {}
+        ruta_casos = DATOS / "casos.json"
+        if red is None and ruta_casos.exists():
+            for c in json.loads(ruta_casos.read_text(encoding="utf-8"))["casos"]:
+                r = Red.cargar(DATOS / c["archivo"], secciones)
+                if r is not None:
+                    self.casos.append(c)
+                    self.redes[c["id"]] = r
+        self.caso = self.casos[0]["id"] if self.casos else None
+        if red is not None:
+            self.red = red
+        elif self.caso:
+            self.red = self.redes[self.caso]
+        else:
+            self.red = Red.cargar(DATOS / "red.json", secciones)
 
     # ---------------------------------------------------------- utilidades
+
+    def usar_caso(self, caso: str) -> None:
+        self.red = self.redes[caso]
+        self.caso = caso
+
+    def ciclo_en_red(self, e: "Equipo", red: Red | None = None) -> dict:
+        """Ciclo y rendimiento con la ruta de un caso y la velocidad de cada tramo.
+
+        No sustituye al ciclo del Excel (`ciclo_de_la_tesis`): es la lectura de
+        un trazo concreto.
+        """
+        red = red or self.red
+        p = self.p
+        t_ida = red.tiempo_min(e, "acarreo", p.velocidad_cargado)
+        t_ret = red.tiempo_min(e, "retorno", p.velocidad_vacio)
+        ciclo = p.tiempo_de_carga + t_ida + p.tiempo_de_descarga + t_ret + p.demoras_variables
+        nominal = self.capacidad_cuchara(e) * 60.0 / ciclo
+        return {
+            "t_acarreo": t_ida, "t_retorno": t_ret, "ciclo": ciclo,
+            "rend_nominal": nominal,
+            "rend_efectivo": nominal * p.disponibilidad_mecanica * p.utilizacion_efectiva,
+            "d_acarreo": red.longitud_ruta("acarreo"), "d_retorno": red.longitud_ruta("retorno"),
+            "desnivel": red.desnivel("acarreo"),
+        }
 
     def equipo(self, ref: int | str) -> Equipo:
         for e in self.equipos:

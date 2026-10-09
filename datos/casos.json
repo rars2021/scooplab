@@ -1,0 +1,22 @@
+{
+  "casos": [
+    {
+      "id": "rampa_fernando",
+      "archivo": "red.json",
+      "nombre": "Rampa Fernando: cargado en bajada",
+      "descripcion": "Del tajo baja por la rampa positiva (15 %) y la Rampa Fernando (13 %) hasta el echadero. Retorna vacio en subida."
+    },
+    {
+      "id": "subida",
+      "archivo": "casos/subida.json",
+      "nombre": "Profundizacion: cargado en subida",
+      "descripcion": "El frente esta bajo el echadero: el mineral sube cargado por una rampa de +13 %. La potencia limita la velocidad."
+    },
+    {
+      "id": "ventana_negativa",
+      "archivo": "casos/ventana_negativa.json",
+      "nombre": "Corte y relleno: ventana negativa",
+      "descripcion": "Ventana de -17 % a la veta (tesis): sale cargado en reversa y en subida, luego baja la rampa de 15 % al echadero."
+    }
+  ]
+}

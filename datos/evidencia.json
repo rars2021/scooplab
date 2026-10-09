@@ -1,0 +1,223 @@
+{
+  "nota": "Capturas de documentos reales. Las fichas son propiedad de sus fabricantes; se citan con su identificador.",
+  "equipos": {
+    "1": {
+      "documento": "Scooptram ST3.5 - Technical specification",
+      "id": "9851 2254 01g",
+      "fecha": "08/2010",
+      "editor": "Atlas Copco Rock Drills AB",
+      "url": "https://mcdowellequipment.com/wp-content/uploads/2024/08/Epiroc-ST3.5.pdf",
+      "paginas": [
+        {
+          "img": "fuentes/st35_p1.jpg",
+          "pie": "Portada",
+          "pagina": 1
+        },
+        {
+          "img": "fuentes/st35_p3.jpg",
+          "pie": "Radio de giro y desempeno en pendiente",
+          "pagina": 3
+        },
+        {
+          "img": "fuentes/st35_p4.jpg",
+          "pie": "Dimensiones, cucharas y pesos",
+          "pagina": 4
+        }
+      ],
+      "video": null,
+      "nota": "La tesis no nombra el modelo; se identifica por 'Scooptram de 3.5 yd3' y 182 HP (= 136 kW)."
+    },
+    "2": {
+      "documento": "Toro LH307 - Technical specification",
+      "id": "TS3-LH307-B-04B-ENG/METRIC",
+      "fecha": "2024",
+      "editor": "Sandvik Mining and Construction Oy",
+      "url": "https://www.mining.sandvik/siteassets/product-documents/loaders/diesel-loaders/lh307-specification-sheet-english.pdf",
+      "paginas": [
+        {
+          "img": "fuentes/lh307_p1.jpg",
+          "pie": "Portada",
+          "pagina": 1
+        },
+        {
+          "img": "fuentes/lh307_p2.jpg",
+          "pie": "Capacidades, velocidades y pesos",
+          "pagina": 2
+        },
+        {
+          "img": "fuentes/lh307_p8.jpg",
+          "pie": "Dimensiones y radios de giro (R1, R2)",
+          "pagina": 8
+        }
+      ],
+      "video": {
+        "youtube": "S-vGmqrRWH0",
+        "canal": "Sandvik Mining",
+        "titulo": "Toro LH307 intro",
+        "oficial": true
+      },
+      "nota": null
+    },
+    "3": {
+      "documento": "Scooptram ST7 - Technical specification",
+      "id": "9869 0107 01d",
+      "fecha": "2025-09",
+      "editor": "Epiroc Rock Drills AB",
+      "url": "https://epiroc.scene7.com/is/content/epiroc/9869+0107+01d+Scooptram+ST7+technical+specification_digitalpdf",
+      "paginas": [
+        {
+          "img": "fuentes/st7_p1.jpg",
+          "pie": "Portada",
+          "pagina": 1
+        },
+        {
+          "img": "fuentes/st7_p4.jpg",
+          "pie": "Capacidades y motor",
+          "pagina": 4
+        },
+        {
+          "img": "fuentes/st7_p5.jpg",
+          "pie": "Radio de giro, dimensiones y desempeno en pendiente",
+          "pagina": 5
+        }
+      ],
+      "video": {
+        "youtube": "US_4-XrgXnQ",
+        "canal": "Savona Equipment",
+        "titulo": "2014 Epiroc ST7 4 Yard Scooptram",
+        "oficial": false
+      },
+      "nota": null
+    },
+    "4": {
+      "documento": "R1300G Underground Mining Loader - Specalog",
+      "id": "AEHQ6356-01",
+      "fecha": "09/2014",
+      "editor": "Caterpillar",
+      "url": "https://s7d2.scene7.com/is/content/Caterpillar/C681897",
+      "paginas": [
+        {
+          "img": "fuentes/r1300g_p1.jpg",
+          "pie": "Portada",
+          "pagina": 1
+        },
+        {
+          "img": "fuentes/r1300g_p13.jpg",
+          "pie": "Motor, pesos y radios de giro",
+          "pagina": 13
+        },
+        {
+          "img": "fuentes/r1300g_p14.jpg",
+          "pie": "Dimensiones",
+          "pagina": 14
+        }
+      ],
+      "video": {
+        "youtube": "swMgTG8XFWs",
+        "canal": "Cat Mining",
+        "titulo": "Chargeuse souterraine Cat R1300G",
+        "oficial": true
+      },
+      "nota": null
+    },
+    "5": {
+      "documento": "Toro LH203 - Technical specification",
+      "id": "TS3-LH203-29-ENG-METRIC",
+      "fecha": "2025",
+      "editor": "Sandvik Mining and Construction Oy",
+      "url": "https://www.mining.sandvik/siteassets/product-documents/loaders/diesel-loaders/lh203-specification-sheet-english.pdf",
+      "paginas": [
+        {
+          "img": "fuentes/lh203_p1.jpg",
+          "pie": "Portada",
+          "pagina": 1
+        },
+        {
+          "img": "fuentes/lh203_p2.jpg",
+          "pie": "Capacidades, velocidades y pesos",
+          "pagina": 2
+        },
+        {
+          "img": "fuentes/lh203_p6.jpg",
+          "pie": "Dimensiones y radios de giro (R1, R2)",
+          "pagina": 6
+        }
+      ],
+      "video": {
+        "youtube": "dhJdP6hMIck",
+        "canal": "McDowell Equipment",
+        "titulo": "Sandvik LH203 Underground Loader",
+        "oficial": false
+      },
+      "nota": null
+    },
+    "8": {
+      "documento": null,
+      "paginas": [],
+      "video": {
+        "youtube": "hxXU7bzXOgo",
+        "canal": "Epiroc Peru",
+        "titulo": "Presentacion Scooptram ST7 Battery - Atlas Copco Peruana",
+        "oficial": true
+      },
+      "nota": "No encontre una ficha publica del ST7 Battery: sus cotas vienen del Excel y el radio interior es estimado."
+    },
+    "9": {
+      "documento": null,
+      "paginas": [],
+      "video": null,
+      "nota": "No encontre una ficha publica del Artisan A10: sus cotas vienen del Excel y el radio interior es estimado."
+    }
+  },
+  "ventanas": {
+    "ciclo": {
+      "documento": "Deudor Yalico, J. (2019). Optimizacion del ciclo de minado... mina Socorro, U.P. Uchucchacua. UNDAC.",
+      "url": "http://repositorio.undac.edu.pe/bitstream/undac/1905/1/T026_47135417_T.pdf",
+      "paginas": [
+        {
+          "img": "fuentes/tesis_p72.jpg",
+          "pie": "Tabla 21: scooptram de 3.5 yd3, 4.17 TCS por cuchara",
+          "pagina": 72
+        },
+        {
+          "img": "fuentes/tesis_p73.jpg",
+          "pie": "Tabla 22: ciclo de 3 min, DM 80 %, UE 75 %, 83.4 TCS/h",
+          "pagina": 73
+        }
+      ]
+    },
+    "ventilacion": {
+      "documento": "Deudor Yalico, J. (2019). Optimizacion del ciclo de minado... mina Socorro, U.P. Uchucchacua. UNDAC.",
+      "url": "http://repositorio.undac.edu.pe/bitstream/undac/1905/1/T026_47135417_T.pdf",
+      "paginas": [
+        {
+          "img": "fuentes/tesis_p76.jpg",
+          "pie": "Tabla 24: requerimiento de aire, 47 092 CFM",
+          "pagina": 76
+        }
+      ]
+    },
+    "geometria": {
+      "documento": "Deudor Yalico, J. (2019). Optimizacion del ciclo de minado... mina Socorro, U.P. Uchucchacua. UNDAC.",
+      "url": "http://repositorio.undac.edu.pe/bitstream/undac/1905/1/T026_47135417_T.pdf",
+      "paginas": [
+        {
+          "img": "fuentes/tesis_p91.jpg",
+          "pie": "Metodos de explotacion: rampas +15 %, ventanas -17 %, flota de scoops",
+          "pagina": 91
+        }
+      ]
+    },
+    "costos": {
+      "documento": "Deudor Yalico, J. (2019). Optimizacion del ciclo de minado... mina Socorro, U.P. Uchucchacua. UNDAC.",
+      "url": "http://repositorio.undac.edu.pe/bitstream/undac/1905/1/T026_47135417_T.pdf",
+      "paginas": [
+        {
+          "img": "fuentes/tesis_p55.jpg",
+          "pie": "Tabla 8: costo de operacion con taladros largos, transporte 1.39 US$/TCS",
+          "pagina": 55
+        }
+      ]
+    }
+  }
+}

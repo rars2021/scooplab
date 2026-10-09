@@ -1,0 +1,213 @@
+{
+  "origen": "Trazo de diseno, no topografia. Gradientes segun la tesis: rampas +15 %, ventanas negativas -17 % a la veta.",
+  "nodos": [
+    {
+      "id": "A",
+      "nombre": "Rampa, hacia arriba (maniobra)",
+      "tipo": "camara",
+      "x": -16,
+      "y": 0,
+      "z": 2.4
+    },
+    {
+      "id": "J",
+      "nombre": "Interseccion rampa - ventana",
+      "tipo": "interseccion",
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    {
+      "id": "K",
+      "nombre": "Acceso a la camara del echadero",
+      "tipo": "interseccion",
+      "x": 34,
+      "y": 0,
+      "z": -5.1
+    },
+    {
+      "id": "E",
+      "nombre": "Rampa, hacia abajo",
+      "tipo": "extremo",
+      "x": 50,
+      "y": 0,
+      "z": -7.5
+    },
+    {
+      "id": "F",
+      "nombre": "Frente en la veta",
+      "tipo": "frente",
+      "x": 0,
+      "y": -24,
+      "z": -4.08
+    },
+    {
+      "id": "O",
+      "nombre": "Echadero",
+      "tipo": "echadero",
+      "x": 34,
+      "y": 18,
+      "z": -5.1
+    }
+  ],
+  "tramos": [
+    {
+      "id": "rampa",
+      "nombre": "Rampa de acceso",
+      "tipo": "rampa",
+      "seccion": "rampas_positivas_a_tajos",
+      "perfil": "boveda",
+      "pendiente_pct": -15.0,
+      "nodos": [
+        "A",
+        "J",
+        "K",
+        "E"
+      ]
+    },
+    {
+      "id": "ventana",
+      "nombre": "Ventana negativa a la veta",
+      "tipo": "ventana",
+      "seccion": "labor_de_produccion_ventanas",
+      "perfil": "herradura",
+      "pendiente_pct": -17.0,
+      "nodos": [
+        "J",
+        "F"
+      ]
+    },
+    {
+      "id": "camara_echadero",
+      "nombre": "Camara del echadero",
+      "tipo": "camara",
+      "seccion": "rampas_positivas_a_tajos",
+      "perfil": "boveda",
+      "pendiente_pct": 0.0,
+      "nodos": [
+        "K",
+        "O"
+      ]
+    }
+  ],
+  "curvas": [
+    {
+      "id": "v_salida",
+      "nombre": "Salida de la ventana en reversa",
+      "nodo": "J",
+      "entre": [
+        "A",
+        "F"
+      ],
+      "radio_m": 6.0,
+      "sobreancho_mm": 400.0
+    },
+    {
+      "id": "v_entrada",
+      "nombre": "Entrada a la ventana",
+      "nodo": "J",
+      "entre": [
+        "K",
+        "F"
+      ],
+      "radio_m": 6.0,
+      "sobreancho_mm": 400.0
+    },
+    {
+      "id": "echadero_entrada",
+      "nombre": "Entrada a la camara del echadero",
+      "nodo": "K",
+      "entre": [
+        "J",
+        "O"
+      ],
+      "radio_m": 6.0,
+      "sobreancho_mm": 400.0
+    },
+    {
+      "id": "echadero_salida",
+      "nombre": "Salida en reversa del echadero",
+      "nodo": "K",
+      "entre": [
+        "O",
+        "E"
+      ],
+      "radio_m": 6.0,
+      "sobreancho_mm": 400.0
+    }
+  ],
+  "ruta": {
+    "acarreo": [
+      {
+        "marcha": "reversa",
+        "nodos": [
+          "F",
+          "J",
+          "A"
+        ]
+      },
+      {
+        "marcha": "adelante",
+        "nodos": [
+          "A",
+          "J",
+          "K",
+          "O"
+        ]
+      }
+    ],
+    "retorno": [
+      {
+        "marcha": "reversa",
+        "nodos": [
+          "O",
+          "K",
+          "E"
+        ]
+      },
+      {
+        "marcha": "adelante",
+        "nodos": [
+          "E",
+          "K",
+          "J",
+          "F"
+        ]
+      }
+    ]
+  },
+  "inicio": [
+    "J",
+    "F"
+  ],
+  "vistas": [
+    {
+      "id": "general",
+      "nombre": "General"
+    },
+    {
+      "id": "frente",
+      "nombre": "Frente",
+      "nodo": "F",
+      "desde": "J",
+      "theta": 2.2,
+      "radio": 18
+    },
+    {
+      "id": "cruce",
+      "nombre": "Interseccion",
+      "nodo": "J",
+      "desde": "A",
+      "theta": -1.9,
+      "radio": 22
+    },
+    {
+      "id": "echadero",
+      "nombre": "Echadero",
+      "nodo": "O",
+      "desde": "K",
+      "theta": 0.6,
+      "radio": 19
+    }
+  ]
+}

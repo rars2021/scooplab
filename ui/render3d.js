@@ -16,7 +16,7 @@
    index.html hacia ui/vendor/. Las camaras viven en camaras.js.
    ========================================================================= */
 import * as THREE from "three";
-import { Red, construirRed, tramosDeMarcha, poseEn } from "./red3d.js";
+import { Red, construirRed, tramosDeMarcha, poseEn, redDeCiclo } from "./red3d.js";
 import { crearCamaras } from "./camaras.js";
 import { crearMinimapa } from "./minimapa.js";
 
@@ -40,7 +40,7 @@ const Render3D = (() => {
 
   function paleta() {
     return {
-      fondo: css("--bg", "#15171a"), linea: css("--rule", "#343a42"),
+      fondo: css("--escena", css("--bg", "#15171a")), linea: css("--rule", "#343a42"),
       tinta: css("--ink", "#d7dbe0"), fuerte: css("--ink-strong", "#f1f4f7"),
       apagado: css("--muted", "#8b939d"), acento: css("--accent", "#4a9ee0"),
       ok: css("--ok", "#3fa985"), warn: css("--warn", "#c99230"), bad: css("--bad", "#d95926"),
@@ -59,13 +59,14 @@ const Render3D = (() => {
     mate: (c) => new THREE.MeshStandardMaterial({
       color: c, metalness: 0.12, roughness: 0.85 }),
     caucho: () => new THREE.MeshStandardMaterial({
-      color: claro() ? 0x4a4f57 : 0x1b1e23, metalness: 0.05, roughness: 0.95 }),
+      color: claro() ? 0x2b2f35 : 0x1b1e23, metalness: 0.05, roughness: 0.95 }),
     cromo: () => new THREE.MeshStandardMaterial({
       color: claro() ? 0xe3e7ec : 0xc8cdd4, metalness: 0.85, roughness: 0.18 }),
   };
   // chapa principal y sombras, un par de escalones mas claros en tema claro
-  const GRIS = () => (claro() ? 0x929ca9 : 0x666e79);
-  const GRIS_OSC = () => (claro() ? 0x6b7684 : 0x3d434b);
+  const GRIS = () => (claro() ? 0x737c88 : 0x666e79);
+  const GRIS_OSC = () => (claro() ? 0x4d555f : 0x3d434b);
+  const luz = c => new THREE.MeshBasicMaterial({ color: c });
 
   /** Prisma con aristas biseladas: evita el aspecto de cubo plano. */
   function bloque(l, h, a, mat, bisel = 0.035) {
@@ -145,6 +146,19 @@ const Render3D = (() => {
       n.position.set(P * 0.5, A * 0.55, ancho * f);
       g.add(n);
     });
+    // planchas laterales de desgaste y regla bajo el talon
+    [-1, 1].forEach(s => {
+      const pl = bloque(P * 0.55, A * 0.34, 0.03, MAT.acero(GRIS_OSC()), 0.006);
+      pl.position.set(P * 0.70, A * 0.16, s * (ancho / 2 + 0.012));
+      pl.rotation.z = -0.16;
+      g.add(pl);
+    });
+    for (let i = 0; i < 3; i++) {
+      const rg = bloque(P * 0.5, 0.025, ancho * 0.10, MAT.acero(GRIS_OSC()), 0.004);
+      rg.position.set(P * 0.62, -A * 0.105, ancho * (-0.3 + i * 0.3));
+      rg.rotation.z = 0.10;
+      g.add(rg);
+    }
     g.userData = { ancho, P, A };
     return g;
   }
@@ -190,6 +204,20 @@ const Render3D = (() => {
       new THREE.CylinderGeometry(r * 0.2, r * 0.2, ancho * 1.12, 12), MAT.acero(0x99a1aa));
     cubo.rotation.x = Math.PI / 2;
     g.add(cubo);
+    // aro del talon y pernos, a los dos lados
+    const matPerno = MAT.acero(0x4a5059);
+    [-1, 1].forEach(s => {
+      const aro = new THREE.Mesh(new THREE.TorusGeometry(r * 0.56, r * 0.035, 6, 22), MAT.acero(0x5f6771));
+      aro.position.z = s * ancho * 0.52;
+      g.add(aro);
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        const pn = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.035, r * 0.035, 0.03, 6), matPerno);
+        pn.rotation.x = Math.PI / 2;
+        pn.position.set(Math.cos(a) * r * 0.38, Math.sin(a) * r * 0.38, s * ancho * 0.535);
+        g.add(pn);
+      }
+    });
     return g;
   }
 
@@ -399,6 +427,118 @@ const Render3D = (() => {
       extras.bateria = { x: -L / 2 + lTras * 0.44, y: H + 0.5 };
     }
 
+    // ---------------- detalle: lo que hace reconocible a un LHD ----------
+    const xCola = -L / 2;
+    // contrapeso con franjas de seguridad
+    const contra = bloque(0.10, hCh * 0.62, W * 0.92, MAT.acero(GRIS_OSC()), 0.02);
+    contra.position.set(xCola - 0.02, yCh - hCh * 0.10, 0);
+    T.add(contra);
+    for (let i = 0; i < 8; i++) {
+      const fr = bloque(0.02, hCh * 0.16, W * 0.105, MAT.mate(i % 2 ? 0x1b1e23 : 0xd9a81e), 0.003);
+      fr.position.set(xCola - 0.075, yCh - hCh * 0.30, -W * 0.40 + i * W * 0.114);
+      T.add(fr);
+    }
+    // luces traseras, gancho de remolque y baliza
+    [-1, 1].forEach(s => {
+      const lt = bloque(0.03, 0.07, 0.13, luz(0xd23b2e), 0.004);
+      lt.position.set(xCola - 0.075, yCh + hCh * 0.10, s * W * 0.36);
+      T.add(lt);
+      const lb = bloque(0.03, 0.07, 0.09, luz(0xfff1cf), 0.004);
+      lb.position.set(xCola - 0.075, yCh + hCh * 0.10, s * W * 0.24);
+      T.add(lb);
+    });
+    const gancho = new THREE.Mesh(new THREE.TorusGeometry(0.07, 0.022, 6, 12), MAT.acero(0x8a929b));
+    gancho.rotation.y = Math.PI / 2;
+    gancho.position.set(xCola - 0.09, yCh - hCh * 0.02, 0);
+    T.add(gancho);
+    // persianas laterales del capo y tapas de inspeccion
+    [-1, 1].forEach(s => {
+      for (let i = 0; i < 5; i++) {
+        const pe = bloque(lTras * 0.07, hCh * 0.46, 0.018, MAT.mate(claro() ? 0x363b42 : 0x1d2025), 0.004);
+        pe.position.set(xCola + lTras * (0.14 + i * 0.095), yCh + hCh * 0.02, s * W * 0.452);
+        T.add(pe);
+      }
+      const tapa = bloque(lTras * 0.20, hCh * 0.50, 0.02, MAT.acero(GRIS_OSC()), 0.012);
+      tapa.position.set(xCola + lTras * 0.76, yCh + hCh * 0.02, s * W * 0.453);
+      T.add(tapa);
+      const manija = bloque(0.07, 0.018, 0.03, MAT.cromo(), 0.004);
+      manija.position.set(xCola + lTras * 0.82, yCh + hCh * 0.02, s * W * 0.468);
+      T.add(manija);
+    });
+    // baranda sobre el capo
+    const yCapo = yCh + hCh / 2 + hCapo;
+    const matBar = MAT.mate(0xd9a81e);
+    [-1, 1].forEach(s => {
+      const lar = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, lTras * 0.5, 6), matBar);
+      lar.rotation.z = Math.PI / 2;
+      lar.position.set(xCola + lTras * 0.50, yCapo + 0.20, s * W * 0.37);
+      T.add(lar);
+      [0.26, 0.50, 0.74].forEach(f => {
+        const pie = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.26, 6), matBar);
+        pie.position.set(xCola + lTras * f, yCapo + 0.08, s * W * 0.37);
+        T.add(pie);
+      });
+    });
+    // planchas de la articulacion
+    [-1, 1].forEach(s => {
+      const pa = bloque(L * 0.11, 0.045, W * 0.34, MAT.acero(GRIS_OSC()), 0.012);
+      pa.position.set(xArt, yCh + s * hCh * 0.50, 0);
+      g.add(pa);
+    });
+    // bastidor delantero: guardabarros, tanque hidraulico, escalera y pasamanos
+    [-1, 1].forEach(s => {
+      const gb = cuna(rR * 2.2, hCh * 0.16, hCh * 0.30, anchoR * 1.15, MAT.acero(GRIS_OSC()));
+      gb.position.set(xArt + lDel * 0.55 - rR * 1.1, yEje + rR * 1.06, s * (W / 2 - anchoR * 0.55));
+      F.add(gb);
+    });
+    const tanque = bloque(lDel * 0.50, hCab * 0.46, W * 0.30, MAT.acero(GRIS()), 0.03);
+    tanque.position.set(xArt + lDel * 0.42, yCh + hCh * 0.44 + hCab * 0.23, W * 0.27);
+    F.add(tanque);
+    const tapon = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.04, 10), MAT.cromo());
+    tapon.position.set(xArt + lDel * 0.30, yCh + hCh * 0.44 + hCab * 0.47, W * 0.27);
+    F.add(tapon);
+    const extintor = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.30, 10), MAT.mate(0xc0392b));
+    extintor.position.set(xArt + lDel * 0.72, yCh + hCh * 0.44 + 0.16, W * 0.13);
+    F.add(extintor);
+    for (let i = 0; i < 2; i++) {
+      const esc2 = bloque(0.20, 0.025, 0.07, MAT.mate(0xd9a81e), 0.004);
+      esc2.position.set(xArt + lDel * 0.44, yEje + rR * 0.25 + i * 0.26, -W * 0.475);
+      F.add(esc2);
+    }
+    const pasam = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, hCab * 0.7, 6), matBar);
+    pasam.position.set(xArt + lDel * 0.19, yCh + hCh * 0.46 + hCab * 0.36, zCab - W * 0.17);
+    F.add(pasam);
+    // cabina: respaldo de malla, consola con palancas y baliza
+    const respaldo = bloque(0.03, hCab * 0.78, W * 0.30, MAT.mate(claro() ? 0x4a515a : 0x2a2e34), 0.006);
+    respaldo.position.set(xArt + lDel * 0.19, yCh + hCh * 0.46 + hCab * 0.42, zCab);
+    F.add(respaldo);
+    const consola = bloque(0.16, 0.34, 0.20, MAT.mate(claro() ? 0x3b4149 : 0x22262b), 0.02);
+    consola.position.set(xArt + lDel * 0.62, yCh + hCh * 0.46 + 0.19, zCab);
+    F.add(consola);
+    [-1, 1].forEach(s => {
+      const pal = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.16, 6), MAT.cromo());
+      pal.position.set(xArt + lDel * 0.60, yCh + hCh * 0.46 + 0.43, zCab + s * 0.05);
+      pal.rotation.z = 0.25;
+      F.add(pal);
+    });
+    const baliza = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.08, 10), luz(0xffa41c));
+    baliza.position.set(xArt + lDel * 0.24, yCh + hCh * 0.46 + hCab + 0.07, zCab);
+    F.add(baliza);
+    // pasadores del brazo y mangueras hidraulicas
+    [-1, 1].forEach(s => {
+      [[0, 0.02], [lBrazo * 0.58, 0.05], [lBrazo * 1.02, -0.16]].forEach(([x, y]) => {
+        const pin = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.13, 10), MAT.cromo());
+        pin.rotation.x = Math.PI / 2;
+        pin.position.set(x, y, s * W * 0.30);
+        brazoGrupo.add(pin);
+      });
+      const mang = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, lBrazo * 0.62, 6),
+        MAT.caucho());
+      mang.rotation.z = Math.PI / 2 - 0.05;
+      mang.position.set(lBrazo * 0.36, 0.085, s * (W * 0.30 - 0.05));
+      brazoGrupo.add(mang);
+    });
+
     // punto de vista del operador, para la camara de cabina
     const ojo = new THREE.Object3D();
     ojo.position.set(xArt + lDel * 0.36, yCh + hCh * 0.46 + hCab * 0.74, zCab);
@@ -535,68 +675,6 @@ const Render3D = (() => {
     return g;
   }
 
-  /* ------------------------------------------------ modo CICLO ---------- */
-  /**
-   * Cargar, acarrear, descargar, retornar. Las duraciones salen de los tiempos
-   * del modelo, de modo que la animacion es una lectura del ciclo real.
-   */
-  function montarCiclo(eq, sec, ctx) {
-    const p = paleta();
-    const g = new THREE.Group();
-    const L = M(eq.largo_mm);
-    const dist = Math.max(8, Math.min(16, (ctx.distancia_m || 80) / 7));
-
-    g.add(construirTunel(sec, dist * 2 + L * 2.4, true));
-
-    // pila de material en el frente
-    const pila = new THREE.Group();
-    for (let i = 0; i < 16; i++) {
-      const r = 0.16 + Math.random() * 0.2;
-      const roca = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0),
-        MAT.mate(claro() ? 0x8d96a1 : 0x545b64));
-      roca.position.set(-dist + (Math.random() - 0.5) * 1.5,
-                        r * 0.8, (Math.random() - 0.5) * 1.8);
-      roca.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3);
-      pila.add(roca);
-    }
-    g.add(pila);
-    const etPila = etiqueta("frente de carguio", p.apagado);
-    etPila.position.set(-dist, 1.5, 0); g.add(etPila);
-
-    // echadero al otro extremo
-    const boca = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.0, 1.0, 0.12, 22),
-      MAT.mate(claro() ? 0x6a727c : 0x1a1d21));
-    boca.position.set(dist, 0.06, 0);
-    g.add(boca);
-    const aro = new THREE.Mesh(
-      new THREE.TorusGeometry(1.0, 0.055, 8, 26), MAT.acero(p.acento));
-    aro.rotation.x = -Math.PI / 2;
-    aro.position.set(dist, 0.09, 0);
-    g.add(aro);
-    const etOre = etiqueta("echadero", p.acento);
-    etOre.position.set(dist, 1.3, 0); g.add(etOre);
-
-    const maq = construirEquipo(eq);
-    g.add(maq);
-
-    // fases con su duracion en minutos del modelo
-    const fases = [
-      { id: "carga", label: "Cargando", min: ctx.t_carga ?? 0.6 },
-      { id: "acarreo", label: "Acarreo cargado", min: ctx.t_acarreo ?? 0.6 },
-      { id: "descarga", label: "Descargando", min: ctx.t_descarga ?? 0.3 },
-      { id: "retorno", label: "Retorno vacio", min: ctx.t_retorno ?? 0.4 },
-    ];
-    const totalMin = fases.reduce((s, f) => s + f.min, 0) || 1.9;
-
-    animables.push({
-      tipo: "ciclo", grupo: maq, fases, totalMin, dist,
-      capacidad: ctx.cap_cuchara || 4.8, pases: 0, t0: performance.now(),
-    });
-    g.userData.dist = dist;
-    return g;
-  }
-
   /* ------------------------------------------------ modo EQUIVALENCIA --- */
   /**
    * Cuantas unidades del equipo de referencia hacen falta para igualar al
@@ -677,7 +755,8 @@ const Render3D = (() => {
    * La posicion es funcion PURA del tiempo normalizado: por eso la barra de
    * reproduccion se puede arrastrar hacia adelante o hacia atras sin desfase.
    */
-  const SIM = { t: 0, play: true, seg: 90, ciclos: 6, cb: null, ultimo: 0 };
+  // `vel` multiplica el tiempo real: a 1x un minuto del ciclo dura un minuto.
+  const SIM = { t: 0, play: true, seg: 90, ciclos: 6, cb: null, ultimo: 0, vel: 1 };
 
   function montarSimulacionRecta(eq, ctx) {
     const p = paleta();
@@ -826,10 +905,10 @@ const Render3D = (() => {
    * -> echadero, y regreso. El equipo sigue el eje de la red por distancia
    * recorrida; los dos bastidores toman la curva por separado.
    */
-  function montarSimRed(eq, ctx) {
+  function montarSimRed(eq, ctx, doc = ctx.red, secciones = ctx.secciones) {
     const p = paleta();
-    const red = new Red(ctx.red, ctx.secciones);
-    const R = construirRed(red, eq, ctx, {
+    const red = new Red(doc, secciones);
+    const R = construirRed(red, eq, { ...ctx, red: doc }, {
       p, MAT, claro, etiqueta: (t, c, e) => etiqueta(t, c, e, true) });
     const maq = construirEquipo(eq, { faros: true });
     maq.rotation.order = "YZX";
@@ -837,12 +916,22 @@ const Render3D = (() => {
     R.setEstilo(estilo);
 
     const legs = tramosDeMarcha(red, eq, R);
+    // El tiempo de viaje sale de lo que el equipo recorre de verdad y de la
+    // velocidad de cada tramo (la del modelo, o menos si la potencia no alcanza
+    // en subida): asi la velocidad que se ve es la del calculo.
+    const metros = ls => ls.reduce((d, l) => d + l.dist, 0);
+    const minutos = ls => ls.reduce((d, l) => d + l.min, 0);
+    cronometrar(legs.acarreo, red, doc.vel, true, ctx.vel_cargado || 8);
+    cronometrar(legs.retorno, red, doc.vel, false, ctx.vel_vacio || 12);
     const fases = [
       { id: "carga", label: "Cargando en el frente", min: ctx.t_carga || 0.6 },
-      { id: "acarreo", label: "Acarreo cargado al echadero", min: ctx.t_acarreo || 0.6, legs: legs.acarreo },
+      { id: "acarreo", label: "Acarreo cargado al echadero", legs: legs.acarreo, min: minutos(legs.acarreo) },
       { id: "descarga", label: "Descargando en el echadero", min: ctx.t_descarga || 0.3 },
-      { id: "retorno", label: "Retorno vacio al frente", min: ctx.t_retorno || 0.4, legs: legs.retorno },
+      { id: "retorno", label: "Retorno vacio al frente", legs: legs.retorno, min: minutos(legs.retorno) },
     ];
+    if (doc.vistas) R.vistas = doc.vistas;
+    if (doc.inicio) R.nodoInicio = doc.inicio;
+    R.metros = { acarreo: metros(legs.acarreo), retorno: metros(legs.retorno) };
     animables.push({
       tipo: "simred", grupo: maq, fases, legs, R,
       totalMin: fases.reduce((a, f) => a + f.min, 0),
@@ -851,7 +940,53 @@ const Render3D = (() => {
     return R;
   }
 
-  const SUAVE = k => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+  /**
+   * Reparte cada tramo de marcha en segmentos de velocidad constante segun la
+   * galeria que pisa. Deja en el tramo sus minutos y `en(w)`: estacion y km/h
+   * cuando ha transcurrido la fraccion w de su tiempo.
+   */
+  function cronometrar(legs, red, vel, cargado, kmhPlano) {
+    legs.forEach(l => {
+      const ids = l.tr.ids, lo = Math.min(l.s0, l.s1), hi = Math.max(l.s0, l.s1);
+      const segs = [];
+      l.tr.elems.forEach(e => {
+        const a = Math.max(lo, e.s0), b = Math.min(hi, e.s0 + e.len);
+        if (b - a < 1e-6) return;
+        const i = Math.min(e.i, ids.length - 2);          // un arco toma el borde que sigue
+        const bd = red.bordes.get(ids[i] + "|" + ids[i + 1]);
+        const tabla = vel && vel[bd.t.id] && vel[bd.t.id][cargado ? "cargado" : "vacio"];
+        // el equipo avanza en el sentido de los nodos del tramo si coinciden eje y marcha
+        const v = tabla ? tabla[bd.inv === l.rev ? 0 : 1] : kmhPlano;
+        segs.push({ a, b, v, min: (b - a) / 1000 / v * 60 });
+      });
+      if (l.rev) segs.reverse();
+      l.segs = segs;
+      l.min = segs.reduce((t, g) => t + g.min, 0);
+      l.en = w => {
+        let t = Math.max(0, Math.min(1, w)) * l.min;
+        for (const g of segs) {
+          if (t <= g.min || g === segs[segs.length - 1]) {
+            const f = g.min ? Math.min(1, t / g.min) : 1;
+            return [l.rev ? g.b - f * (g.b - g.a) : g.a + f * (g.b - g.a), g.v];
+          }
+          t -= g.min;
+        }
+        return [l.s1, kmhPlano];
+      };
+    });
+  }
+
+  /**
+   * Perfil de marcha: acelera, mantiene velocidad de crucero y frena. Devuelve
+   * [avance 0..1, velocidad relativa a la media]. El pico es solo 1.1x la media.
+   */
+  const RAMPA = 0.1;
+  function marchaEn(w) {
+    const c = 1 / (1 - RAMPA);
+    if (w < RAMPA) return [c * w * w / (2 * RAMPA), c * w / RAMPA];
+    if (w > 1 - RAMPA) return [1 - c * (1 - w) * (1 - w) / (2 * RAMPA), c * (1 - w) / RAMPA];
+    return [c * (w - RAMPA / 2), c];
+  }
   const _off = new THREE.Vector3();
 
   /** Lleva el equipo a la estacion s del eje `tr`. */
@@ -883,17 +1018,20 @@ const Render3D = (() => {
     const fase = tramos.find(f => dentro >= f.ini && dentro < f.fin) || tramos[tramos.length - 1];
     const k = (dentro - fase.ini) / Math.max(fase.fin - fase.ini, 1e-6);
 
-    let brazo = 0, volteo = 0, marcha = "";
+    let brazo = 0, volteo = 0, marcha = "", kmh = 0;
     if (fase.legs) {
-      // el tiempo de la fase se reparte entre sus tramos de marcha por distancia
-      const dist = fase.legs.reduce((d, l) => d + l.dist, 0);
+      // el tiempo de la fase se reparte entre sus tramos de marcha segun lo que tardan
+      const dur = fase.legs.reduce((d, l) => d + l.min, 0);
       let ac = 0, leg = fase.legs[fase.legs.length - 1], w = 1;
       for (const l of fase.legs) {
-        const f = l.dist / dist;
+        const f = l.min / dur;
         if (k < ac + f) { leg = l; w = (k - ac) / f; break; }
         ac += f;
       }
-      posar(a, leg.tr, leg.s0 + (leg.s1 - leg.s0) * SUAVE(w));
+      const [avance, rel] = marchaEn(w);
+      const [est, v] = leg.en(avance);
+      posar(a, leg.tr, est);
+      kmh = v * rel;
       marcha = leg.rev ? " (reversa)" : "";
       if (fase.id === "acarreo") { brazo = 0.09; volteo = -0.13; }
       else { brazo = 0.02; volteo = -0.05; }
@@ -927,13 +1065,37 @@ const Render3D = (() => {
       minuto: (pos * a.totalMin).toFixed(1),
       totalMin: (total * a.totalMin).toFixed(1),
       masa: (ciclo * a.capacidad).toFixed(1),
-      unidad: a.unidad,
+      unidad: a.unidad, kmh: kmh.toFixed(1),
+    });
+    if (onFase && modo === "ciclo") onFase({
+      fase: fase.label + marcha, id: fase.id, progreso: dentro,
+      minuto: (dentro * a.totalMin).toFixed(2), totalMin: a.totalMin.toFixed(2),
+      kmh: kmh.toFixed(1), metros: a.R.metros,
     });
   }
 
+  /**
+   * Modo Ciclo: el ciclo del Excel sobre una red minima a nivel (frente, camara
+   * de maniobra y crucero al echadero), con la distancia de acarreo del modelo.
+   */
+  function montarCicloRed(eq, sec, ctx) {
+    const s = { clave: "ciclo", ancho_mm: 3000, alto_mm: 3000, ...(sec || {}) };
+    s.clave = s.clave || "ciclo";
+    const R = montarSimRed(eq, ctx, redDeCiclo(eq, s, ctx), [s]);
+    R.vistas = [
+      { id: "general", nombre: "General" },
+      { id: "frente", nombre: "Frente", nodo: "F", desde: "J", theta: -2.0, radio: 17 },
+      { id: "giro", nombre: "Giro", nodo: "J", desde: "M", theta: -1.1, radio: 22 },
+      { id: "echadero", nombre: "Echadero", nodo: "O", desde: "J", theta: 2.4, radio: 19 },
+    ];
+    R.nodoInicio = ["J", "F"];
+    return R;
+  }
+
+  function setSimVel(v) { SIM.vel = Math.max(0.25, Math.min(32, +v || 1)); }
   function setSimTiempo(t01) { SIM.t = Math.max(0, Math.min(1, t01)); }
   function setSimPlay(v) { SIM.play = !!v; SIM.ultimo = performance.now(); }
-  const getSim = () => ({ t: SIM.t, play: SIM.play, seg: SIM.seg });
+  const getSim = () => ({ t: SIM.t, play: SIM.play, seg: SIM.seg, vel: SIM.vel });
   function alSimTick(fn) { SIM.cb = fn; }
 
   /* ------------------------------------------------ escena -------------- */
@@ -1039,17 +1201,20 @@ const Render3D = (() => {
     maquina = null;
   }
 
+  let modoRed = "";               // modo con el que se monto la red vigente
   function reconstruir(recarga = false) {
     if (!esc || !equipoActual) return;
-    recarga = recarga && !!redActual && modo === "simulacion";
+    recarga = recarga && !!redActual && modo === modoRed;
     limpiar();
     raiz = new THREE.Group();
     const eq = equipoActual, sec = seccionActual, ctx = contexto;
 
     const tSim = SIM.t;
     let theta = null;
-    if (modo === "simulacion" && ctx.red) {
-      const R = montarSimRed(eq, ctx);
+    if ((modo === "simulacion" && ctx.red) || modo === "ciclo") {
+      const R = modo === "ciclo" ? montarCicloRed(eq, sec, ctx) : montarSimRed(eq, ctx);
+      SIM.ciclos = modo === "ciclo" ? 1 : 6;
+      modoRed = modo;
       raiz.add(R.grupo);
       redActual = R;
       orbita.radio = Math.max(40, Math.hypot(R.tam.x, R.tam.z) * 1.1);
@@ -1067,14 +1232,6 @@ const Render3D = (() => {
       orbita.phi = 1.05;
       orbita.objetivo.set(0, 1.3, 0);
       SIM.t = 0; SIM.play = true; SIM.ultimo = performance.now();
-
-    } else if (modo === "ciclo") {
-      const esc = montarCiclo(eq, sec, ctx);
-      raiz.add(esc);
-      // el encuadre cubre frente, recorrido y echadero completos
-      orbita.radio = Math.max(26, (esc.userData.dist || 12) * 2.7);
-      orbita.phi = 1.02;
-      orbita.objetivo.set(0, 1.2, 0);
 
     } else if (modo === "equivalencia" && ctx.referencia) {
       raiz.add(montarEquivalencia(eq, ctx.referencia, ctx));
@@ -1108,9 +1265,10 @@ const Render3D = (() => {
     sc.updateProjectionMatrix();
     luces.key.position.set(10, 16, 9).multiplyScalar(redActual ? 2.2 : 1);
 
-    const inicio = redActual ? redActual.mundoNodo("J1", 0.2) : null;
+    const [nIni, nMira] = (redActual && redActual.nodoInicio) || ["J1", "F"];
+    const inicio = redActual ? redActual.mundoNodo(nIni, 0.2) : null;
     camaras.setEscena({ red: redActual, maquina, inicio,
-      mirarInicio: redActual ? redActual.mundoNodo("F", 1.5) : null });
+      mirarInicio: redActual ? redActual.mundoNodo(nMira, 1.5) : null });
     if (!recarga || !redActual) {
       camaras.encuadrar({ objetivo: orbita.objetivo, theta, phi: orbita.phi, radio: orbita.radio });
     }
@@ -1132,14 +1290,15 @@ const Render3D = (() => {
     { id: "echadero", nombre: "Echadero", nodo: "O", desde: "K", theta: 2.4, radio: 19 },
   ];
 
+  const vistasRed = () => (redActual ? (redActual.vistas || VISTAS_RED) : []);
   function estadoEscena() {
     return { modo, red: !!redActual, maquina: !!maquina && modo !== "equivalencia",
              camara: camaras ? camaras.getModo() : "orbita", estilo,
-             vistas: redActual ? VISTAS_RED.map(v => ({ id: v.id, nombre: v.nombre })) : [] };
+             vistas: vistasRed().map(v => ({ id: v.id, nombre: v.nombre })) };
   }
 
   function irAVista(id) {
-    const v = VISTAS_RED.find(x => x.id === id);
+    const v = vistasRed().find(x => x.id === id);
     if (!v || !redActual) return;
     if (!v.nodo) {
       if (camaras.getModo() !== "orbita") camaras.setModo("orbita");
@@ -1216,69 +1375,6 @@ const Render3D = (() => {
   function alCambiarFase(fn) { onFase = fn; }
 
   /* ------------------------------------------------ animacion ----------- */
-  function animarCiclo(a, t) {
-    const g = a.grupo;
-    const u = g.userData;
-    const ciclo = 11000;                       // ms de una vuelta completa
-    const tt = ((t - a.t0) % ciclo) / ciclo;   // 0..1
-
-    // reparto proporcional a los tiempos reales del modelo
-    let acum = 0;
-    const tramos = a.fases.map(f => {
-      const ini = acum / a.totalMin;
-      acum += f.min;
-      return { ...f, ini, fin: acum / a.totalMin };
-    });
-    const fase = tramos.find(f => tt >= f.ini && tt < f.fin) || tramos[tramos.length - 1];
-    const k = (tt - fase.ini) / Math.max(fase.fin - fase.ini, 1e-6);
-    const suave = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
-
-    let x = -a.dist, brazo = 0, volteo = 0, avance = 0;
-    if (fase.id === "carga") {
-      x = -a.dist;
-      brazo = Math.sin(k * Math.PI) * 0.22;         // penetra y levanta
-      volteo = -Math.sin(k * Math.PI) * 0.30;
-    } else if (fase.id === "acarreo") {
-      x = -a.dist + suave * a.dist * 2;
-      brazo = 0.10; volteo = -0.12;
-      avance = suave * a.dist * 2;
-    } else if (fase.id === "descarga") {
-      x = a.dist;
-      brazo = 0.10 + Math.sin(k * Math.PI) * 0.16;
-      volteo = -0.12 + Math.sin(k * Math.PI) * 1.05;   // vuelca
-    } else {
-      x = a.dist - suave * a.dist * 2;
-      brazo = 0.02; volteo = -0.05;
-      avance = suave * a.dist * 2;
-    }
-
-    g.position.x = x;
-    const haciaAtras = fase.id === "retorno";
-    g.rotation.y = haciaAtras ? Math.PI : 0;
-    if (haciaAtras) g.position.x = -x;             // compensa el giro del grupo
-
-    if (u.brazo) u.brazo.rotation.z = brazo;
-    if (u.cuchara) u.cuchara.rotation.z = volteo;
-    u.ruedas.forEach(r => { r.rotation.z -= (fase.id === "acarreo" || fase.id === "retorno") ? 0.09 : 0; });
-
-    // material en la cuchara durante acarreo
-    if (!a.carga) {
-      const c = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 8), MAT.mate(claro() ? 0x9aa3ad : 0x6b737d));
-      c.visible = false;
-      u.cuchara.add(c);
-      a.carga = c;
-    }
-    a.carga.visible = fase.id === "acarreo" || (fase.id === "descarga" && k < 0.55);
-    a.carga.position.set(0.35, 0.30, 0);
-    a.carga.scale.setScalar(Math.cbrt((a.capacidad || 4.8) / 4.8));
-
-    if (onFase) onFase({
-      fase: fase.label, id: fase.id,
-      progreso: tt, minuto: (tt * a.totalMin).toFixed(2),
-      totalMin: a.totalMin.toFixed(2),
-    });
-  }
-
   let tPrevio = performance.now();
   function animar() {
     requestAnimationFrame(animar);
@@ -1289,7 +1385,9 @@ const Render3D = (() => {
 
     animables.forEach(a => {
       if (a.tipo === "simred") {
-        if (SIM.play) SIM.t = (SIM.t + (t - SIM.ultimo) / 1000 / SIM.seg) % 1;
+        // tiempo real x velocidad elegida, sobre la duracion calculada del ciclo
+        const dur = SIM.ciclos * a.totalMin * 60;
+        if (SIM.play || modo === "ciclo") SIM.t = (SIM.t + dt * SIM.vel / dur) % 1;
         SIM.ultimo = t;
         aplicarSimRed(a, SIM.t);
       }
@@ -1298,7 +1396,6 @@ const Render3D = (() => {
         SIM.ultimo = t;
         aplicarSim(a, SIM.t);
       }
-      if (a.tipo === "ciclo") animarCiclo(a, t);
       const u = a.grupo && a.grupo.userData;
       if (u && u.extras && u.extras.humo) {
         u.extras.humo.children.forEach((s, i) => {
@@ -1318,7 +1415,7 @@ const Render3D = (() => {
 
   return { iniciar, cargarEquipo, actualizarTema, redimensionar,
            setModo, getModo, setContexto, alCambiarFase,
-           setSimTiempo, setSimPlay, getSim, alSimTick,
+           setSimTiempo, setSimPlay, setSimVel, getSim, alSimTick,
            setCamara, getCamara: () => (camaras ? camaras.getModo() : "orbita"),
            irAVista, setEstilo, conectarMinimapa, estadoEscena,
            alCambiarEscena(fn) { alEscena = fn; },

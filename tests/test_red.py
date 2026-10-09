@@ -82,12 +82,26 @@ def test_lh307_pasa_todas_las_curvas(m):
     assert g.apto_curvas
 
 
-def test_equipos_anchos_no_pasan_el_giro_de_la_ventana(m):
-    """ST7 y R1300G entran en recta por la labor de 3 m, pero no giran en ella."""
-    for n in (3, 4):
-        g = m.geometria(m.equipo(n))
-        malas = {c.id for c in g.curvas if not c.cabe}
-        assert {"t_maniobra", "t_frente"} <= malas
+def test_sin_sobreancho_no_se_gira_en_la_labor_de_3_m(m):
+    """En recta entran todos; el giro de 90 grados exige ensanchar la interseccion."""
+    red = m.red
+    curva = next(c for c in red.curvas if c["id"] == "t_maniobra")
+    original = curva["sobreancho_mm"]
+    try:
+        curva["sobreancho_mm"] = 0.0
+        for n in (2, 3, 4):
+            fila = next(f for f in red.revisar(m.equipo(n), 300) if f.id == "t_maniobra")
+            assert fila.gira and not fila.cabe
+    finally:
+        curva["sobreancho_mm"] = original
+
+
+def test_barrido_del_lh307_es_coherente_con_su_ficha(m):
+    """Sandvik da 3059 mm de ancho de tunel para girar (T2); el modelo, en su
+    radio minimo, da la corona R2 - R1 = 2930 mm: mismo orden."""
+    e = m.equipo(2)
+    assert e.radio_giro_int_mm == 2998.0 and not e.radio_giro_int_estimado
+    assert ancho_barrido_mm(e, radio_eje_min_mm(e)) == pytest.approx(2930, abs=1)
 
 
 def test_curva_mas_cerrada_que_el_giro_minimo_no_se_puede_seguir(m):
@@ -106,7 +120,6 @@ def test_revision_de_curvas_no_altera_el_veredicto_del_excel(m):
     """El filtro de seccion recta sigue siendo el del Excel."""
     e = m.equipo(4)
     g = m.geometria(e)
-    assert not g.apto_curvas
     sc = m.seccion_critica
     assert g.apto_produccion == (g.ancho_req_mm <= sc.ancho_mm and g.alto_req_mm <= sc.alto_mm)
 

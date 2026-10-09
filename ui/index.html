@@ -37,6 +37,13 @@
   <div id="ayudaCam"></div>
 </div>
 
+<!-- casos de simulacion: cada uno es un trazo con su terreno y su resultado -->
+<div id="casos" hidden>
+  <div class="h">CASO DE SIMULACION</div>
+  <select id="selCaso" data-tip="Cambia el trazo de galerias"></select>
+  <div class="d" id="casoLectura"></div>
+</div>
+
 <!-- planta de la red: un clic lleva la camara a ese punto -->
 <canvas id="minimapa" hidden data-tip="Clic para ir a ese punto"></canvas>
 
@@ -44,7 +51,7 @@
 <div id="modos">
   <span class="segmentado" id="segModo">
     <button data-modo="ficha" class="sel" data-tip="Una unidad en la labor, con cotas">Ficha</button>
-    <button data-modo="ciclo" data-tip="Cargar, acarrear, descargar, retornar">Ciclo</button>
+    <button data-modo="ciclo" data-tip="El ciclo del Excel a nivel: frente, maniobra y echadero">Ciclo</button>
     <button data-modo="equivalencia" data-tip="Cuantos equipos diesel igualan al electrico">Equivalencia</button>
     <button data-modo="simulacion" data-tip="Operacion completa: frente, rampas y echadero">Simulacion</button>
   </span>
@@ -52,6 +59,12 @@
     <button data-m="500">500</button><button data-m="750">750</button>
     <button data-m="1000" class="sel">1000</button><button data-m="1500">1500</button>
     <button data-m="2000">2000</button>
+  </span>
+  <span class="segmentado" id="segVel" hidden>
+    <button data-vel="1" class="sel" data-tip="Tiempo real: la velocidad que se ve es la del calculo">1×</button>
+    <button data-vel="2" data-tip="El doble del tiempo real">2×</button>
+    <button data-vel="4">4×</button>
+    <button data-vel="8">8×</button>
   </span>
   <div id="faseCiclo"></div>
   <div id="reproductor" hidden>

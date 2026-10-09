@@ -20,12 +20,13 @@
   color-scheme:dark;
 }
 :root[data-theme="light"]{
-  --bg:#ffffff; --panel:#f4f5f7; --panel-2:#e9ebee;
-  --ink:#2a2f36; --ink-strong:#12161b; --muted:#6d747d; --rule:#d4d8de;
-  --accent-soft:rgba(74,158,224,.14);
-  --ok:#2e8b6b; --warn:#a9781c; --bad:#c44a1c;
-  --chrome:#f7f8faee;
-  --sombra:0 10px 30px rgba(30,45,70,.18);
+  /* tonos medios, como un visor CAD: paneles gris claro sobre una escena gris */
+  --bg:#c9ced5; --escena:#9aa1ab; --panel:#e3e6ea; --panel-2:#d2d6dc;
+  --ink:#252a31; --ink-strong:#0f1317; --muted:#515a65; --rule:#aab1ba;
+  --accent:#1f6fb5; --accent-soft:rgba(31,111,181,.16);
+  --ok:#1f7a5c; --warn:#8f6410; --bad:#b84117;
+  --chrome:#d8dce1ee;
+  --sombra:0 8px 24px rgba(20,28,40,.28);
   color-scheme:light;
 }
 
@@ -77,11 +78,11 @@ button{font-family:inherit;color:inherit;cursor:pointer}
 .eq-item .en{width:7px;height:7px;flex:none;border-radius:50%}
 
 /* ---------------- CONTROL DE MODO DE ESCENA ---------------- */
-#modos{position:fixed;left:50%;transform:translateX(-50%);bottom:58px;z-index:28;
+#modos{position:fixed;left:50%;transform:translateX(-50%);bottom:58px;z-index:18;
   display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
 #modos .segmentado{pointer-events:auto;background:var(--panel);box-shadow:var(--sombra)}
-#segMetaEq[hidden]{display:none}
-#segMetaEq button{padding:2px 9px;font-family:var(--mono);font-size:10.5px}
+#segMetaEq[hidden],#segVel[hidden]{display:none}
+#segMetaEq button,#segVel button{padding:2px 9px;font-family:var(--mono);font-size:10.5px}
 #faseCiclo{font-family:var(--mono);font-size:11px;color:var(--muted);
   background:var(--panel);border:1px solid var(--rule);padding:3px 10px;
   min-height:0;opacity:0;transition:opacity .2s}
@@ -106,7 +107,7 @@ button{font-family:inherit;color:inherit;cursor:pointer}
 .rp-lectura .f{color:var(--accent)}
 
 /* ---------------- CAMARA, VISTAS Y MINIMAPA ---------------- */
-#camaras{position:fixed;left:50%;transform:translateX(-50%);top:12px;z-index:28;
+#camaras{position:fixed;left:50%;transform:translateX(-50%);top:12px;z-index:18;
   display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;
   max-width:calc(100vw - 600px)}
 #camaras .segmentado{pointer-events:auto;background:var(--panel);box-shadow:var(--sombra);flex-wrap:wrap;justify-content:center}
@@ -118,7 +119,7 @@ button{font-family:inherit;color:inherit;cursor:pointer}
 #ayudaCam.on{opacity:1}
 #ayudaCam b{color:var(--ink-strong);font-weight:600}
 #escena:focus-visible{outline:none}
-#minimapa{position:fixed;left:12px;bottom:58px;z-index:28;width:230px;height:230px;
+#minimapa{position:fixed;left:12px;bottom:58px;z-index:18;width:230px;height:230px;
   background:var(--panel);border:1px solid var(--rule);box-shadow:var(--sombra);cursor:crosshair}
 #minimapa[hidden]{display:none}
 
@@ -291,3 +292,33 @@ input[type="range"]::-moz-range-thumb{width:9px;height:14px;border:none;border-r
   #hud,#selector{position:static;width:auto;margin:8px}
   .win{left:6px!important;right:6px!important;top:6px!important;width:auto!important;max-height:calc(100% - 110px)}
 }
+
+/* ---------------- EVIDENCIA: fichas y fuentes reales ---------------- */
+.evid .head .r{color:var(--ok)}
+.evid-ref{font-size:11.5px;color:var(--ink);margin-bottom:6px}
+.evid-ref a{color:var(--accent)}
+.evid-nota{font-size:11px;color:var(--muted);margin-bottom:8px}
+.evid-caps{display:flex;gap:10px;flex-wrap:wrap}
+.evid-cap{margin:0;flex:1 1 170px;max-width:260px;cursor:zoom-in;border:1px solid var(--rule);background:#fff}
+.evid-cap img{display:block;width:100%;height:190px;object-fit:cover;object-position:top}
+.evid-cap figcaption{font-size:10.5px;color:var(--muted);background:var(--panel-2);padding:4px 7px;border-top:1px solid var(--rule)}
+.evid-cap:hover{border-color:var(--accent)}
+.evid-video{margin-top:10px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.evid-canal{font-size:10.5px;color:var(--muted)}
+.evid-yt{width:100%;aspect-ratio:16/9;border:1px solid var(--rule);background:#000}
+.evid-visor{position:fixed;inset:0;z-index:999;background:rgba(8,10,12,.9);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:8px;cursor:zoom-out;padding:18px}
+.evid-visor img{max-width:96vw;max-height:90vh;object-fit:contain;background:#fff}
+.evid-visor .pie{font-family:var(--mono);font-size:11px;color:#d7dbe0}
+
+/* ---------------- CASOS DE SIMULACION ---------------- */
+#casos{position:fixed;left:12px;bottom:296px;z-index:18;width:230px;background:var(--panel);
+  border:1px solid var(--rule);box-shadow:var(--sombra)}
+#casos[hidden]{display:none}
+#casos .h{padding:5px 9px;border-bottom:1px solid var(--rule);background:var(--panel-2);font-size:10.5px;
+  letter-spacing:1.1px;font-weight:700;color:var(--ink-strong)}
+#casos select{width:calc(100% - 16px);margin:8px;background:var(--panel-2);color:var(--ink-strong);
+  border:1px solid var(--rule);padding:4px 6px;font:inherit;font-size:11.5px}
+#casos .d{padding:0 9px 9px;font-size:11px;color:var(--muted);line-height:1.4}
+#casos .d .kv2{display:grid;grid-template-columns:1fr auto;gap:1px 8px;margin-top:6px;font-family:var(--mono);font-size:10.5px}
+#casos .d .kv2 b{color:var(--ink-strong);font-weight:600;text-align:right}

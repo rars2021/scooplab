@@ -61,7 +61,7 @@
       "vida_util_h": 25000.0,
       "consumo": 16.0,
       "flexibilidad": 5.0,
-      "fuente": "Ficha TS3-LH307-B-04B-ENG/METRIC 2024 y pagina de producto mining.sandvik",
+      "fuente": "Ficha Sandvik Toro LH307, TS3-LH307-B-04B-ENG/METRIC (2024): 160 kW, cuchara 3.1 m3, radios de giro R1 2998 / R2 5928 mm (p. 8).",
       "id": "E02",
       "render": {
         "clase": "diesel",
@@ -71,8 +71,8 @@
         "bateria": false
       },
       "consumo_unidad": "gal/h",
-      "radio_giro_int_mm": 3266.0,
-      "radio_giro_int_estimado": true
+      "radio_giro_int_mm": 2998.0,
+      "radio_giro_int_estimado": false
     },
     {
       "n": 3,
@@ -97,7 +97,7 @@
       "vida_util_h": 25000.0,
       "consumo": 15.0,
       "flexibilidad": 5.0,
-      "fuente": "Ficha Epiroc 9869 0107 01d",
+      "fuente": "Ficha Epiroc Scooptram ST7, 9869 0107 01d (2025-09): 144 kW, ancho 2309 mm, radios de giro 3141 / 6010 mm (p. 9).",
       "id": "E03",
       "render": {
         "clase": "diesel",
@@ -107,8 +107,8 @@
         "bateria": false
       },
       "consumo_unidad": "gal/h",
-      "radio_giro_int_mm": 3216.0,
-      "radio_giro_int_estimado": true
+      "radio_giro_int_mm": 3141.0,
+      "radio_giro_int_estimado": false
     },
     {
       "n": 4,
@@ -126,14 +126,14 @@
       "potencia_hp": 165.0,
       "peso_kg": 20950.0,
       "fuerza_arranque_kg": 12020.0,
-      "radio_giro_mm": 6000.0,
+      "radio_giro_mm": 5741.0,
       "vel_max_kmh": 17.0,
       "autonomia": "Tanque diesel. Clearance rec. 3000x2800",
       "precio_usd": 880000.0,
       "vida_util_h": 25000.0,
       "consumo": 14.0,
       "flexibilidad": 5.0,
-      "fuente": "Ficha Caterpillar R1300G, pag. 13-14",
+      "fuente": "Specalog Cat R1300G, AEHQ6356-01 (09/2014): 123 kW, 6 800 kg, radios de giro 2825 / 5741 mm (p. 13).",
       "id": "E04",
       "render": {
         "clase": "diesel",
@@ -143,8 +143,8 @@
         "bateria": false
       },
       "consumo_unidad": "gal/h",
-      "radio_giro_int_mm": 3195.0,
-      "radio_giro_int_estimado": true
+      "radio_giro_int_mm": 2825.0,
+      "radio_giro_int_estimado": false
     },
     {
       "n": 5,
@@ -162,14 +162,14 @@
       "potencia_hp": 115.0,
       "peso_kg": 12500.0,
       "fuerza_arranque_kg": 6500.0,
-      "radio_giro_mm": 4600.0,
+      "radio_giro_mm": 4697.0,
       "vel_max_kmh": 20.0,
       "autonomia": "Tanque diesel",
       "precio_usd": 620000.0,
       "vida_util_h": 22000.0,
       "consumo": 8.0,
       "flexibilidad": 5.0,
-      "fuente": "Pagina de producto mining.sandvik, gama Toro",
+      "fuente": "Ficha Sandvik Toro LH203, TS3-LH203-29-ENG-METRIC (2025): 71.5 kW, cuchara 1.5 m3, radios de giro R1 2720 / R2 4697 mm (p. 6).",
       "id": "E05",
       "render": {
         "clase": "diesel",
@@ -179,8 +179,8 @@
         "bateria": false
       },
       "consumo_unidad": "gal/h",
-      "radio_giro_int_mm": 2785.0,
-      "radio_giro_int_estimado": true
+      "radio_giro_int_mm": 2720.0,
+      "radio_giro_int_estimado": false
     },
     {
       "n": 8,
